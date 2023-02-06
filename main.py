@@ -1,22 +1,26 @@
 import asyncio
 import config
 import logging
-
-from discord.ext import commands
-from discord import (
-    __version__ as __discord__,
-    Intents,
-    Activity,
-    ActivityType,
-    Guild,
-    Embed,
-    Interaction,
-    PrivilegedIntentsRequired,
-    LoginFailure
-)
 from typing import Union
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s (%(filename)s) - %(message)s')
+
+try:
+    from discord.ext import commands
+    from discord import (
+        __version__ as __discord__,
+        Intents,
+        Activity,
+        ActivityType,
+        Guild,
+        Embed,
+        Interaction,
+        PrivilegedIntentsRequired,
+        LoginFailure
+    )
+except ModuleNotFoundError:
+    logging.fatal('Missing required dependencies.')
+    exit(0)
 
 
 class GamBot(commands.Bot):
@@ -60,9 +64,9 @@ class GamBot(commands.Bot):
                 try:
                     await self.start(self._token)
                 except LoginFailure:
-                    logging.error('Invalid token passed.')
+                    logging.fatal('Invalid token passed.')
                 except PrivilegedIntentsRequired:
-                    logging.error('Privileged intents are being requested that have not '
+                    logging.fatal('Privileged intents are being requested that have not '
                                   'been explicitly enabled in the developer portal..')
 
         async def cancel_tasks():
@@ -90,5 +94,5 @@ if __name__ == '__main__':
 
     else:
         logging.error('The incorrect version of discord.py has been installed.')
-        logging.error(f'Current Version: {__discord__}')
+        logging.error('Current Version: {}'.format(__discord__))
         logging.error('Required: 2.1.0')
