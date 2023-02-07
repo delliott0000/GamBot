@@ -15,6 +15,7 @@ try:
         ActivityType,
         Guild,
         Embed,
+        User,
         Interaction,
         PrivilegedIntentsRequired,
         LoginFailure,
@@ -96,7 +97,7 @@ class GamBot(commands.Bot):
             self.owner_ids = set(int(user_id) for user_id in config.OWNERS.split(','))
             logging.info('Owners: ' + ''.join([(await self.fetch_user(user_id)).name for user_id in self.owner_ids]))
         except (ValueError, NotFound):
-            logging.fatal('Unknown/invalid owner ID(s) passed.')
+            logging.fatal('Unknown/Invalid owner ID(s) passed.')
             exit(0)
 
     def run_bot(self):
