@@ -35,7 +35,7 @@ class GamBot(commands.Bot):
             intents=Intents.default(),
             command_prefix=None,
             help_command=None,
-            activity=Activity(type=ActivityType.custom, name=config.ACTIVITY)
+            activity=Activity(type=ActivityType.watching, name=config.ACTIVITY)
         )
         self.db = None
 
@@ -61,7 +61,7 @@ class GamBot(commands.Bot):
         return 0xffffff
 
     @staticmethod
-    def _time_now():
+    def _now():
         return floor(utils.utcnow().timestamp())
 
     @staticmethod
