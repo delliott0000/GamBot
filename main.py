@@ -1,9 +1,18 @@
 import asyncio
-import config
 import logging
 from typing import Union
 from pathlib import Path
 from math import floor, sqrt
+from config import (
+    achievements_mapping,
+    pack_mapping,
+    boost_mapping,
+    TOKEN,
+    OWNERS,
+    ACTIVITY,
+    START_CASH, START_GOLD,
+    COLOUR_INFO, COLOUR_ERROR, COLOUR_SUCCESS
+)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s (%(filename)s) - %(message)s')
 
@@ -36,25 +45,25 @@ class GamBot(commands.Bot):
             intents=Intents.default(),
             command_prefix=None,
             help_command=None,
-            activity=Activity(type=ActivityType.watching, name=config.ACTIVITY)
+            activity=Activity(type=ActivityType.watching, name=ACTIVITY)
         )
         self.db = None
 
     @property
     def _token(self):
-        return config.TOKEN
+        return TOKEN
 
     @property
     def _colour_info(self):
-        return hex(int(config.COLOUR_INFO, 16))
+        return hex(int(COLOUR_INFO, 16))
 
     @property
     def _colour_success(self):
-        return hex(int(config.COLOUR_SUCCESS, 16))
+        return hex(int(COLOUR_SUCCESS, 16))
 
     @property
     def _colour_error(self):
-        return hex(int(config.COLOUR_ERROR, 16))
+        return hex(int(COLOUR_ERROR, 16))
 
     def _bot_colour(self, guild: Union[Guild, None]):
         if guild:
@@ -94,7 +103,7 @@ class GamBot(commands.Bot):
         cursor = await self.db.execute('SELECT * FROM user_data WHERE id = ?', (user.id,))
         data = await cursor.fetchone()
         if not data:
-            data = (user.id, config.START_CASH, config.START_GOLD, 0, 1.0, 1.0, 0, 0, 0, 0)
+            data = (user.id, START_CASH, START_GOLD, 0, 1.0, 1.0, 0, 0, 0, 0)
             await self.db.execute('INSERT INTO user_data (id, money, gold, xp, pay_mult, xp_mult, daily_claimed, '
                                   'cons_dailies, blacklisted, premium) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', data)
             await self.db.commit()
@@ -140,10 +149,11 @@ class GamBot(commands.Bot):
                 'gold_pack_l, jackpot_pack, pay_boost_c, pay_boost_r, pay_boost_e, xp_boost_c, xp_boost_r, xp_boost_e) '
                 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', data)
             await self.db.commit()
-        return {'pay_boost_c': data[8], 'pay_boost_r': data[9], 'pay_boost_e': data[10], 'xp_boost_c': data[11],
-                'xp_boost_r': data[12], 'xp_boost_e': data[13], 'money_pack_s': data[1], 'money_pack_m': data[2],
-                'money_pack_l': data[3], 'gold_pack_s': data[4], 'gold_pack_m': data[5], 'gold_pack_l': data[6],
-                'jackpot_pack': data[7]}
+        return {'Common Payout Booster': data[8], 'Rare Payout Booster': data[9], 'Epic Payout Booster': data[10],
+                'Common XP Booster': data[11], 'Rare XP Booster': data[12], 'Epic XP Booster': data[13],
+                'Small Money Pack': data[1], 'Medium Money Pack': data[2], 'Large Money Pack': data[3],
+                'Small Gold Pack': data[4], 'Medium Gold Pack': data[5], 'Large Gold Pack': data[6],
+                'Jackpot Pack': data[7]}
 
     async def achievements(self, user: User) -> dict:
         cursor = await self.db.execute('SELECT * FROM achievements WHERE id = ?', (user.id,))
@@ -180,9 +190,12 @@ class GamBot(commands.Bot):
             except Forbidden as error:
                 logging.warning(error)
 
-    async def edit_inventory(self, user: User, item_type: str, amount: int):
-        count = (await self.inventory(user))[item_type] + amount
-        await self.db.execute(f'UPDATE inventories SET {item_type} = ? WHERE id = ?', (count, user.id))
+    async def edit_inventory(self, user: User, item: str, amount: int):
+        count = (await self.inventory(user))[item] + amount
+        try:
+            await self.db.execute(f'UPDATE inventories SET {pack_mapping[item][0]} = ? WHERE id = ?', (count, user.id))
+        except KeyError:
+            await self.db.execute(f'UPDATE inventories SET {boost_mapping[item][0]} = ? WHERE id = ?', (count, user.id))
         await self.db.commit()
 
     async def add_achievement(self, interaction: Interaction, user: User, achievement: str):
@@ -192,7 +205,7 @@ class GamBot(commands.Bot):
         await self.db.commit()
         try:
             await interaction.channel.send(
-                f'{user.mention} just earned the achievement: `{config.achievements_mapping[achievement]}`. '
+                f'{user.mention} just earned the achievement: `{achievements_mapping[achievement]}`. '
                 f'They win a `$100,000` bonus!')
         except Forbidden as error:
             logging.warning(error)
@@ -208,7 +221,7 @@ class GamBot(commands.Bot):
         logging.info(f'Logging in as {self.user} (ID: {self.user.id})...')
 
         try:
-            self.owner_ids = set(int(user_id) for user_id in config.OWNERS.split(','))
+            self.owner_ids = set(int(user_id) for user_id in OWNERS.split(','))
             logging.info('Owners: ' + ''.join([(await self.fetch_user(user_id)).name for user_id in self.owner_ids]))
         except (ValueError, NotFound):
             logging.fatal('Unknown/Invalid owner ID(s) passed.')
