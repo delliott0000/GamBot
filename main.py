@@ -21,7 +21,8 @@ try:
         Interaction,
         PrivilegedIntentsRequired,
         LoginFailure,
-        NotFound
+        NotFound,
+        Forbidden
     )
     import aiosqlite
 except ModuleNotFoundError:
@@ -91,7 +92,7 @@ class GamBot(commands.Bot):
 
     async def user_data(self, user: User) -> tuple:
         cursor = await self.db.execute('SELECT * FROM user_data WHERE id = ?', (user.id,))
-        data = await cursor.fetchall()
+        data = await cursor.fetchone()
         if not data:
             data = (user.id, config.START_CASH, config.START_GOLD, 0, 1.0, 1.0, 0, 0, 0, 0)
             await self.db.execute('INSERT INTO user_data (id, money, gold, xp, pay_mult, xp_mult, daily_claimed, '
@@ -128,6 +129,57 @@ class GamBot(commands.Bot):
 
     async def has_premium(self, user: User) -> bool:
         return True if (await self.user_data(user))[9] else False
+
+    async def inventory(self, user: User) -> dict:
+        cursor = await self.db.execute('SELECT * FROM inventories WHERE id = ?', (user.id,))
+        data = await cursor.fetchone()
+        if not data:
+            data = (user.id,) + (0,) * 13
+            await self.db.execute(
+                'INSERT INTO inventories (id, money_pack_s, money_pack_m, money_pack_l, gold_pack_s, gold_pack_m, '
+                'gold_pack_l, jackpot_pack, pay_boost_c, pay_boost_r, pay_boost_e, xp_boost_c, xp_boost_r, xp_boost_e) '
+                'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', data)
+            await self.db.commit()
+        return {'Common Payout Booster': data[8], 'Rare Payout Booster': data[9], 'Epic Payout Booster': data[10],
+                'Common XP Booster': data[11], 'Rare XP Booster': data[12], 'Epic XP Booster': data[13],
+                'Small Money Pack': data[1], 'Medium Money Pack': data[2], 'Large Money Pack': data[3],
+                'Small Gold Pack': data[4], 'Medium Gold Pack': data[5], 'Large Gold Pack': data[6],
+                'Jackpot Pack': data[7]}
+
+    async def achievements(self, user: User) -> dict:
+        cursor = await self.db.execute('SELECT * FROM achievements WHERE id = ?', (user.id,))
+        data = await cursor.fetchone()
+        if not data:
+            data = (user.id,) + (0,) * 15
+            await self.db.execute(
+                'INSERT INTO achievements (id, bj_max, bj_sevens, rou_mil, rou_zero, poker_sf, poker_max, hl_max, '
+                'hl_str, slot_jack, spin_jack, lott_win, scrat_win, mill, bill, legend) '
+                'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', data)
+            await self.db.commit()
+        return {
+            'bj_max': data[1], 'bj_sevens': data[2], 'rou_mil': data[3], 'rou_zero': data[4], 'poker_sf': data[5],
+            'poker_max': data[6], 'hl_max': data[7], 'hl_streak': data[8], 'slot_jack': data[9], 'spin_jack': data[10],
+            'lott_win': data[11], 'scratch_win': data[12], 'million': data[13], 'billion': data[14], 'legend': data[15]}
+
+    async def edit_balances(self, interaction: Interaction, user: User,
+                            money_d: int = 0, gold_d: int = 0, xp_d: int = 0) -> None:
+        old_rank = await self.rank(user)
+
+        new_money = await self.money(user) + money_d
+        new_gold = await self.gold(user) + gold_d
+        new_xp = await self.xp(user) + xp_d
+
+        await self.db.execute('UPDATE user_data SET money = ?, gold = ?, xp = ? WHERE id = ?',
+                              (new_money, new_gold, new_xp, user.id))
+        await self.db.commit()
+
+        new_rank = await self.rank(user)
+        if new_rank != old_rank:
+            try:
+                await interaction.channel.send(f'***{self.user.mention} has just reached rank {new_rank}!***\n'
+                                               f'***They\'ve been awarded `x1 Small Gold Pack`.***')
+            except Forbidden as error:
+                logging.warning(error)
 
     async def setup_hook(self) -> None:
         logging.info('Setting up database...')
