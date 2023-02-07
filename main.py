@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Union
+from typing import Optional
 from pathlib import Path
 from math import floor, sqrt
 from config import (
@@ -65,7 +65,7 @@ class GamBot(commands.Bot):
     def _colour_error(self):
         return hex(int(COLOUR_ERROR, 16))
 
-    def _bot_colour(self, guild: Union[Guild, None]):
+    def _bot_colour(self, guild: Optional[Guild]):
         if guild:
             return guild.get_member(self.user.id).colour
         return 0xffffff
@@ -170,6 +170,11 @@ class GamBot(commands.Bot):
             'poker_max': data[6], 'hl_max': data[7], 'hl_str': data[8], 'slot_jack': data[9], 'spin_jack': data[10],
             'lott_win': data[11], 'scrat_win': data[12], 'mill': data[13], 'bill': data[14], 'legend': data[15]}
 
+    async def boosts(self, user: User) -> list:
+        cursor = await self.db.execute('SELECT * FROM active_boosts WHERE id = ?', (user.id,))
+        data = await cursor.fetchall()
+        return data
+
     async def edit_balances(self, interaction: Interaction, user: User,
                             money_d: int = 0, gold_d: int = 0, xp_d: int = 0) -> None:
         old_rank = await self.rank(user)
@@ -190,6 +195,16 @@ class GamBot(commands.Bot):
             except Forbidden as error:
                 logging.warning(error)
 
+    async def edit_pay_mult(self, user: User, pay_mult_d: float):
+        pay_mult = (await self.pay_mult(user)) + pay_mult_d
+        await self.db.execute('UPDATE user_data SET pay_mult = ? WHERE id = ?', (pay_mult, user.id))
+        await self.db.commit()
+
+    async def edit_xp_mult(self, user: User, xp_mult_d: float):
+        xp_mult = (await self.xp_mult(user)) + xp_mult_d
+        await self.db.execute('UPDATE user_data SET xp_mult = ? WHERE id = ?', (xp_mult, user.id))
+        await self.db.commit()
+
     async def edit_inventory(self, user: User, item: str, amount: int):
         count = (await self.inventory(user))[item] + amount
         try:
@@ -206,10 +221,10 @@ class GamBot(commands.Bot):
         try:
             await interaction.channel.send(
                 f'{user.mention} just earned the achievement: `{achievements_mapping[achievement]}`. '
-                f'They win a `$100,000` bonus!')
+                f'They win `$100,000` and an XP bonus!')
         except Forbidden as error:
             logging.warning(error)
-        await self.edit_balances(interaction, user, money_d=100000)
+        await self.edit_balances(interaction, user, money_d=100000, xp_d=5000)
 
     async def setup_hook(self) -> None:
         logging.info('Setting up database...')
