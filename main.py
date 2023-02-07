@@ -58,10 +58,14 @@ class GamBot(commands.Bot):
             return guild.get_member(self.user.id).colour
         return 0xffffff
 
+    @staticmethod
+    async def ephemeral_response(interaction: Interaction, reply: str, colour: int):
+        await interaction.response.send_message(embed=Embed(colour=colour, description=reply), ephemeral=True)
+
     async def format_db(self):
         await self.db.execute(
-            'create table if not exists user_data (id integer, money integer, gold integer, xp integer, daily_claimed '
-            'integer, cons_dailies integer, blacklisted integer, premium integer)')
+            'create table if not exists user_data (id integer, money integer, gold integer, xp integer, pay_mult real, '
+            'xp_mult real, daily_claimed integer, cons_dailies integer, blacklisted integer, premium integer)')
         await self.db.execute(
             'create table if not exists inventories (user_id integer, money_pack_s integer, money_pack_m integer, '
             'money_pack_l integer, gold_pack_s integer, gold_pack_m integer, gold_pack_l integer, jackpot_pack integer,'
@@ -80,9 +84,42 @@ class GamBot(commands.Bot):
             'item_6 text)')
         await self.db.commit()
 
-    @staticmethod
-    async def ephemeral_response(interaction: Interaction, reply: str, colour: int):
-        await interaction.response.send_message(embed=Embed(colour=colour, description=reply), ephemeral=True)
+    async def user_data(self, user: User):
+        cursor = await self.db.execute('SELECT * FROM user_data WHERE id = ?', (user.id,))
+        data = await cursor.fetchall()
+        if not data:
+            data = (user.id, config.START_CASH, config.START_GOLD, 0, 1.0, 1.0, 0, 0, 0, 0)
+            await self.db.execute('INSERT INTO user_data (id, money, gold, xp, pay_mult, xp_mult, daily_claimed, '
+                                  'cons_dailies, blacklisted, premium) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', data)
+            await self.db.commit()
+        return data
+
+    async def money(self, user: User):
+        return (await self.user_data(user))[1]
+
+    async def gold(self, user: User):
+        return (await self.user_data(user))[2]
+
+    async def xp(self, user: User):
+        return (await self.user_data(user))[3]
+
+    async def pay_mult(self, user: User):
+        return (await self.user_data(user))[4]
+
+    async def xp_mult(self, user: User):
+        return (await self.user_data(user))[5]
+
+    async def daily_claimed(self, user: User):
+        return True if (await self.user_data(user))[6] else False
+
+    async def cons_dailies(self, user: User):
+        return (await self.user_data(user))[7]
+
+    async def is_blacklisted(self, user: User):
+        return True if (await self.user_data(user))[8] else False
+
+    async def has_premium(self, user: User):
+        return True if (await self.user_data(user))[9] else False
 
     async def setup_hook(self) -> None:
         logging.info('Setting up database...')
