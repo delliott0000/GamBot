@@ -10,4 +10,4 @@ If you wish to create your own instance of this bot, follow the instructions bel
 - Make sure you have `Python >= 3.10` as well as the listed requirements installed. Many are dependencies of the `discord.py` library.
 - Open the file named `envvar.env` and replace the values with your own. For variables that take a list of values, separate each value with only a comma.
 - Makes sure the `envvar.env` and `data.db` files are kept in the same directory as `main.py`. Do not rename either of them. These files are what store your user & configuration data, so it's recommended to back them up regularly.
-- Run main.py.
+- Navigate into the GamBot directory in the terminal and run `python3 main.py`.
