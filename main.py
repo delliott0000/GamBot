@@ -140,11 +140,10 @@ class GamBot(commands.Bot):
                 'gold_pack_l, jackpot_pack, pay_boost_c, pay_boost_r, pay_boost_e, xp_boost_c, xp_boost_r, xp_boost_e) '
                 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', data)
             await self.db.commit()
-        return {'Common Payout Booster': data[8], 'Rare Payout Booster': data[9], 'Epic Payout Booster': data[10],
-                'Common XP Booster': data[11], 'Rare XP Booster': data[12], 'Epic XP Booster': data[13],
-                'Small Money Pack': data[1], 'Medium Money Pack': data[2], 'Large Money Pack': data[3],
-                'Small Gold Pack': data[4], 'Medium Gold Pack': data[5], 'Large Gold Pack': data[6],
-                'Jackpot Pack': data[7]}
+        return {'pay_boost_c': data[8], 'pay_boost_r': data[9], 'pay_boost_e': data[10], 'xp_boost_c': data[11],
+                'xp_boost_r': data[12], 'xp_boost_e': data[13], 'money_pack_s': data[1], 'money_pack_m': data[2],
+                'money_pack_l': data[3], 'gold_pack_s': data[4], 'gold_pack_m': data[5], 'gold_pack_l': data[6],
+                'jackpot_pack': data[7]}
 
     async def achievements(self, user: User) -> dict:
         cursor = await self.db.execute('SELECT * FROM achievements WHERE id = ?', (user.id,))
@@ -158,8 +157,8 @@ class GamBot(commands.Bot):
             await self.db.commit()
         return {
             'bj_max': data[1], 'bj_sevens': data[2], 'rou_mil': data[3], 'rou_zero': data[4], 'poker_sf': data[5],
-            'poker_max': data[6], 'hl_max': data[7], 'hl_streak': data[8], 'slot_jack': data[9], 'spin_jack': data[10],
-            'lott_win': data[11], 'scratch_win': data[12], 'million': data[13], 'billion': data[14], 'legend': data[15]}
+            'poker_max': data[6], 'hl_max': data[7], 'hl_str': data[8], 'slot_jack': data[9], 'spin_jack': data[10],
+            'lott_win': data[11], 'scrat_win': data[12], 'mill': data[13], 'bill': data[14], 'legend': data[15]}
 
     async def edit_balances(self, interaction: Interaction, user: User,
                             money_d: int = 0, gold_d: int = 0, xp_d: int = 0) -> None:
@@ -176,10 +175,28 @@ class GamBot(commands.Bot):
         new_rank = await self.rank(user)
         if new_rank != old_rank:
             try:
-                await interaction.channel.send(f'***{self.user.mention} has just reached rank {new_rank}!***\n'
+                await interaction.channel.send(f'***{user.mention} has just reached rank {new_rank}!***\n'
                                                f'***They\'ve been awarded `x1 Small Gold Pack`.***')
             except Forbidden as error:
                 logging.warning(error)
+
+    async def edit_inventory(self, user: User, item_type: str, amount: int):
+        count = (await self.inventory(user))[item_type] + amount
+        await self.db.execute(f'UPDATE inventories SET {item_type} = ? WHERE id = ?', (count, user.id))
+        await self.db.commit()
+
+    async def add_achievement(self, interaction: Interaction, user: User, achievement: str):
+        if (await self.achievements(user))[achievement]:
+            return
+        await self.db.execute(f'UPDATE achievements SET {achievement} = ? WHERE id = ?', (1, user.id))
+        await self.db.commit()
+        try:
+            await interaction.channel.send(
+                f'{user.mention} just earned the achievement: `{config.achievements_mapping[achievement]}`. '
+                f'They win a `$100,000` bonus!')
+        except Forbidden as error:
+            logging.warning(error)
+        await self.edit_balances(interaction, user, money_d=100000)
 
     async def setup_hook(self) -> None:
         logging.info('Setting up database...')
