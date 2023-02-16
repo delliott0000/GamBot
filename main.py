@@ -3,6 +3,8 @@ import logging
 from typing import Optional
 from pathlib import Path
 from math import floor, sqrt
+from time import strftime
+from random import sample
 
 from config import (
     achievements_mapping,
@@ -31,7 +33,8 @@ try:
         PrivilegedIntentsRequired,
         LoginFailure,
         NotFound,
-        Forbidden
+        Forbidden,
+        HTTPException
     )
     import aiosqlite
 except ModuleNotFoundError:
@@ -170,7 +173,18 @@ class GamBot(commands.Bot):
         return True if (await self.user_data(user))[9] else False
 
     async def add_premium(self, user: User, duration: int) -> None:
-        pass
+        if await self.has_premium(user):
+            lasts_until = [b for b in await self.boosts(user) if b[1] == 'Premium'][0][4] + duration
+            await self.db.execute('UPDATE active_boosts SET lasts_until = ? WHERE id = ? AND boost_type = ?',
+                                  (lasts_until, user.id, 'Premium'))
+        else:
+            await self.db.execute('UPDATE user_data SET premium = ? WHERE id = ?', (1, user.id))
+            await self.edit_pay_mult(user, 0.10)
+            await self.edit_xp_mult(user, 0.25)
+            await self.db.execute('INSERT INTO active_boosts (id, boost_type, pay_mult, xp_mult, lasts_until) '
+                                  'VALUES (?, ?, ?, ?, ?)',
+                                  (user.id, 'Premium', 0.10, 0.25, self.time_now() + duration))
+        await self.db.commit()
 
     async def inventory(self, user: User) -> dict:
         cursor = await self.db.execute('SELECT * FROM inventories WHERE id = ?', (user.id,))
@@ -229,12 +243,87 @@ class GamBot(commands.Bot):
         data = await cursor.fetchall()
         return data
 
-    async def add_boost(self, user: User, boost_type: str) -> None:
-        pass
+    async def add_boost(self, user: User, boost_type: str):
+        boost = boost_mapping[boost_type]
+        existing = [b for b in await self.boosts(user) if b[1] == boost[0]]
+        if existing:
+            new_lasts_until = existing[0][4] + boost[3]
+            await self.db.execute('UPDATE active_boosts SET lasts_until = ? WHERE id = ? AND boost_type = ?',
+                                  (new_lasts_until, user.id, boost[0]))
+        else:
+            await self.edit_pay_mult(user, boost[1])
+            await self.edit_xp_mult(user, boost[2])
+            await self.db.execute('INSERT INTO active_boosts (id, boost_type, pay_mult, xp_mult, lasts_until) '
+                                  'VALUES (?, ?, ?, ?, ?)',
+                                  (user.id, boost[0], boost[1], boost[2], self.time_now() + boost[3]))
+        await self.db.commit()
+
+    async def item_shop(self):
+        cursor = await self.db.execute('SELECT * FROM daily_shop')
+        return await cursor.fetchone()
+
+    async def wipe(self, user_id: int):
+        await self.db.execute('DELETE FROM user_data WHERE id = ?', (user_id,))
+        await self.db.execute('DELETE FROM achievements WHERE id = ?', (user_id,))
+        await self.db.execute('DELETE FROM inventories WHERE id = ?', (user_id,))
+        await self.db.execute('DELETE FROM active_boosts WHERE id = ?', (user_id,))
+        await self.db.commit()
 
     @tasks.loop(seconds=30)
     async def update_data(self):
-        pass
+        await self.wait_until_ready()
+
+        cursor = await self.db.execute(f'SELECT * FROM active_boosts WHERE lasts_until < {self.time_now()}')
+        expired_boosts = await cursor.fetchall()
+        await self.db.execute(f'DELETE FROM active_boosts WHERE lasts_until < {self.time_now()}')
+
+        for boost in expired_boosts:
+
+            try:
+                user = await self.fetch_user(boost[0])
+            except (NotFound, HTTPException):
+                logging.warning(f'Unknown user ID: {boost[0]} - Wiping associated data...')
+                await self.wipe(boost[0])
+                continue
+
+            await self.edit_pay_mult(user, boost[2] * -1)
+            await self.edit_xp_mult(user, boost[3] * -1)
+
+            if boost[1] == 'Premium':
+                await self.db.execute('UPDATE user_data SET premium = ? WHERE id = ?', (0, user.id))
+
+        await self.db.commit()
+
+    @tasks.loop(seconds=10)
+    async def wait_for_daily(self):
+        if strftime('%H:%M') == '00:00':
+            self.daily_reset.start()
+            self.wait_for_daily.stop()
+            logging.info('Daily loop started!')
+
+    @tasks.loop(hours=24)
+    async def daily_reset(self):
+        cursor = await self.db.execute('SELECT id, daily_claimed, cons_dailies FROM user_data')
+        data = await cursor.fetchall()
+
+        for entry in data:
+            if entry[1]:
+                await self.db.execute('UPDATE user_data SET cons_dailies = ? WHERE id = ?', (entry[2] + 1, entry[0]))
+            else:
+                await self.db.execute('UPDATE user_data SET cons_dailies = ? WHERE id = ?', (0, entry[0]))
+        await self.db.execute('UPDATE user_data SET daily_claimed = ?', (0,))
+
+        new_items = tuple(sample(list(boost_mapping) + list(pack_mapping), 6))
+
+        cursor = await self.db.execute('SELECT * FROM daily_shop')
+        if await cursor.fetchone():
+            await self.db.execute('UPDATE daily_shop SET item_1 = ?, item_2 = ?, item_3 = ?, item_4 = ?, item_5 = ?, '
+                                  'item_6 = ?', new_items)
+        else:
+            await self.db.execute('INSERT INTO daily_shop (item_1, item_2, item_3, item_4, item_5, item_6) VALUES '
+                                  '(?, ?, ?, ?, ?, ?)', new_items)
+
+        await self.db.commit()
 
     async def setup_hook(self) -> None:
         logging.info('Setting up database...')
@@ -242,6 +331,10 @@ class GamBot(commands.Bot):
         self.db = await aiosqlite.connect(Path(__file__).with_name('data.db'))
         await self.db.execute('PRAGMA journal_mode=wal')
         await self.format_db()
+
+        logging.info('Starting background tasks...')
+        self.update_data.start()
+        self.wait_for_daily.start()
 
         logging.info(f'Logging in as {self.user} (ID: {self.user.id})...')
 
@@ -269,6 +362,9 @@ class GamBot(commands.Bot):
                 await self.db.close()
             except AttributeError:
                 pass
+            self.update_data.stop()
+            self.wait_for_daily.stop()
+            self.daily_reset.stop()
 
         try:
             asyncio.run(runner())
