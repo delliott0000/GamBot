@@ -103,7 +103,7 @@ class GamBot(commands.Bot):
         cursor = await self.db.execute('SELECT * FROM user_data WHERE id = ?', (user.id,))
         data = await cursor.fetchone()
         if not data:
-            data = (user.id, START_CASH, START_GOLD, 0, 1.0, 1.0, 0, 0, 0, 0)
+            data = (user.id, int(START_CASH), int(START_GOLD), 0, 1.0, 1.0, 0, 0, 0, 0)
             await self.db.execute('INSERT INTO user_data (id, money, gold, xp, pay_mult, xp_mult, daily_claimed, '
                                   'cons_dailies, blacklisted, premium) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', data)
             await self.db.commit()
@@ -311,13 +311,11 @@ class GamBot(commands.Bot):
 
     @tasks.loop(hours=24)
     async def daily_reset(self):
-        cursor = await self.db.execute('SELECT id, daily_claimed, cons_dailies FROM user_data')
+        cursor = await self.db.execute('SELECT id, daily_claimed FROM user_data')
         data = await cursor.fetchall()
 
         for entry in data:
-            if entry[1]:
-                await self.db.execute('UPDATE user_data SET cons_dailies = ? WHERE id = ?', (entry[2] + 1, entry[0]))
-            else:
+            if not entry[1]:
                 await self.db.execute('UPDATE user_data SET cons_dailies = ? WHERE id = ?', (0, entry[0]))
         await self.db.execute('UPDATE user_data SET daily_claimed = ?', (0,))
 
