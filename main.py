@@ -1,3 +1,4 @@
+import os
 import asyncio
 import logging
 from typing import Optional
@@ -29,6 +30,7 @@ try:
         Guild,
         Embed,
         User,
+        Color,
         Interaction,
         PrivilegedIntentsRequired,
         LoginFailure,
@@ -69,6 +71,12 @@ class GamBot(commands.Bot):
     @staticmethod
     async def response(interaction: Interaction, reply: str, colour: int, ephemeral: bool = False):
         await interaction.response.send_message(embed=Embed(colour=colour, description=reply), ephemeral=ephemeral)
+
+    async def bad_response(self, interaction: Interaction, reply: str):
+        await self.response(interaction, reply, Color.red(), True)
+
+    async def blacklisted_response(self, interaction: Interaction):
+        await self.bad_response(interaction, '❌ You\'ve been blacklisted from using this bot.')
 
     async def format_db(self):
         await self.db.execute(
@@ -336,6 +344,9 @@ class GamBot(commands.Bot):
         self.update_data.start()
         self.wait_for_daily.start()
 
+        logging.info('Syncing commands...')
+        await self.tree.sync()
+
         logging.info(f'Logging in as {self.user} (ID: {self.user.id})...')
 
         try:
@@ -348,6 +359,19 @@ class GamBot(commands.Bot):
     def run_bot(self):
         async def runner():
             async with self:
+
+                try:
+                    for filename in os.listdir('./cogs'):
+                        if filename.endswith('.py'):
+                            try:
+                                await self.load_extension(f'cogs.{filename[:-3]}')
+                            except (commands.ExtensionFailed, commands.NoEntryPointError):
+                                logging.warning(f'Extension {filename} could not be loaded...')
+                except FileNotFoundError as err:
+                    logging.fatal(err)
+                    logging.fatal('Ensure the cogs folder is in the same working directory as main.py and try again.')
+                    exit()
+
                 try:
                     await self.start(self._token)
                 except LoginFailure:

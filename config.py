@@ -5,7 +5,6 @@ load_dotenv('envvar.env')
 
 TOKEN = getenv('TOKEN')
 OWNERS = getenv('OWNERS')
-
 ACTIVITY = getenv('ACTIVITY')
 
 START_CASH = getenv('START_CASH')
