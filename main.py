@@ -7,6 +7,7 @@ from math import floor, sqrt
 from time import strftime
 from random import sample
 from datetime import date, datetime
+from re import fullmatch
 
 from config import (
     achievements_mapping,
@@ -15,6 +16,7 @@ from config import (
     TOKEN,
     OWNERS,
     ACTIVITY,
+    INVITE, SUPPORT, VOTE,
     START_CASH, START_GOLD,
 )
 
@@ -30,6 +32,7 @@ try:
         Activity,
         ActivityType,
         Guild,
+        Message,
         Embed,
         User,
         Color,
@@ -50,12 +53,18 @@ class GamBot(commands.Bot):
     def __init__(self):
         super().__init__(
             intents=Intents.default(),
-            command_prefix='',
+            command_prefix=None,
             help_command=None,
-            activity=Activity(type=ActivityType.watching, name=ACTIVITY)
+            activity=Activity(type=ActivityType.playing, name=ACTIVITY)
         )
         self.db = None
+
+        self.invite = INVITE
+        self.support = SUPPORT
+        self.vote = VOTE
+
         self.next_reset_time = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
+
         self.tree.on_error = self.cog_app_command_error
 
     @property
@@ -361,6 +370,40 @@ class GamBot(commands.Bot):
             await asyncio.sleep(0.2)
 
         await self.db.commit()
+
+    def assist_embed(self, guild: Optional[Guild]):
+        assist_embed = Embed(
+            colour=self.colour(guild),
+            title='♦ GamBot! ♦',
+            description='Hello! I\'m a bot built to play fun games such as Blackjack, Roulette, Poker and more. '
+                        'I also feature a built-in currency system, profiles, XP/ranking and many more features.\n\n'
+                        '**Use `/help` to view a full list of my commands. Popular commands include:\n'
+                        '`/blackjack, /roulette, /higherorlower, /daily, /profile` . . .\n'
+                        'and the list goes on!\n\n'
+                        'Please ensure I have the following permissions enabled:\n'
+                        '`Read Messages, Send Messages, Embed Links, Use External Emojis`.**\n\n'
+                        f'[Invite Me]({self.invite}) | [Support Server]({self.support}) | [Vote For Me]({self.vote})')
+        return assist_embed
+
+    async def on_message(self, message: Message):
+        if fullmatch(rf'<@{self.user.id}>', message.content):
+            try:
+                await message.channel.send(embed=self.assist_embed(message.guild))
+            except Forbidden:
+                pass
+
+    async def on_guild_join(self, guild: Guild):
+        logging.info(f'Joined {guild.name} (now in {len(self.guilds):,} total guilds)')
+        for channel in guild.channels:
+            if channel == guild.system_channel:
+                try:
+                    await channel.send(embed=self.assist_embed(guild))
+                except Forbidden:
+                    pass
+                break
+
+    async def on_guild_remove(self, guild: Guild):
+        logging.info(f'Left {guild.name} (now in {len(self.guilds):,} total guilds)')
 
     async def cog_app_command_error(self, interaction: Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CommandOnCooldown):

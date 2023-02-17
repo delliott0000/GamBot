@@ -9,7 +9,9 @@ from discord import (
 )
 from config import (
     wheel_mapping,
-    slot_num_to_emote
+    slot_num_to_emote,
+    roulette_listings as r_l,
+    rou_nums_to_emotes as r_n_e
 )
 from random import (
     choice,
@@ -168,6 +170,63 @@ class Games(commands.Cog):
                   f'{f"Bonus Item: `1x {bonus_item}`!" if bonus_item else ""}')
 
         await interaction.edit_original_response(embed=spin_e)
+
+    @app_commands.command(name='roulette', description='Spin the roulette wheel and place a bet!')
+    @app_commands.describe(item='What would you like to bet on?', bet='How much money would you like to bet?')
+    async def roulette(self, interaction: Interaction, item: str, bet: int):
+        if await self.bot.is_blacklisted(interaction.user):
+            await self.bot.blacklisted_response(interaction)
+            return
+        elif not 1 <= bet <= 100000:
+            await self.bot.bad_response(interaction, '❌ Bets must be between `$1` and `$100,000`.')
+            return
+        elif await self.bot.money(interaction.user) < bet:
+            await self.bot.bad_response(interaction, '❌ You can\'t afford that bet.')
+            return
+        elif item not in r_l:
+            await self.bot.bad_response(interaction, '❌ Invalid bet type.')
+            return
+
+        await self.bot.edit_balances(interaction, interaction.user, money_d=bet * -1)
+
+        rou_s = Embed(
+            colour=self.bot.colour(interaction.guild),
+            description=f'{interaction.user.mention} **(Total Bet: `${bet:,}`)**')
+        rou_s.set_author(name='Roulette', icon_url=self.bot.user.avatar)
+        rou_s.set_thumbnail(url='https://cdn.discordapp.com/emojis/1044575898076201023.webp?size=128&quality=lossless')
+        rou_s.add_field(name='Spinning...', value='Ball is rolling, good luck!')
+        await interaction.response.send_message(embed=rou_s)
+
+        await sleep(3)
+        result = randint(0, 36)
+
+        rou_s.remove_field(0)
+        rou_s.add_field(name='Result', value=f'> Ball landed on {r_n_e[result]}!', inline=False)
+
+        if result in r_l[item]:
+            winnings = floor(bet * await self.bot.pay_mult(interaction.user) * (36 / len(r_l[item]) - 1))
+            xp_gain = floor(bet * await self.bot.xp_mult(interaction.user) * (36 / len(r_l[item]) - 1) / 100)
+
+            await self.bot.edit_balances(interaction, interaction.user, money_d=winnings + bet, xp_d=xp_gain)
+            rou_s.add_field(name='Winner!', value=f'💎 You won `${winnings:,}`!', inline=False)
+
+            if winnings >= 1000000:
+                await self.bot.add_achievement(interaction, interaction.user, 'rou_mil')
+            if result == 0 and bet >= 25000:
+                await self.bot.add_achievement(interaction, interaction.user, 'rou_zero')
+
+        else:
+            rou_s.add_field(name='Loser!', value='😢 You lost, better luck next time!', inline=False)
+
+        await interaction.edit_original_response(embed=rou_s)
+
+    @roulette.autocomplete('item')
+    async def rou_autocomplete(self, interaction: Interaction, current: str) -> list[app_commands.Choice[str]]:
+        item_list = []
+        for item in r_l:
+            if current.lower() in item.lower() and len(item_list) < 25:
+                item_list.append(app_commands.Choice(name=item, value=item))
+        return item_list
 
 
 async def setup(bot: GamBot):
