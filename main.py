@@ -138,10 +138,11 @@ class GamBot(commands.Bot):
         await self.db.commit()
 
         new_rank = await self.rank(user)
-        if new_rank != old_rank:
+        if new_rank > old_rank:
             try:
                 await interaction.channel.send(f'***{user.mention} has just reached rank {new_rank}!***\n'
                                                f'***They\'ve been awarded `x1 Small Gold Pack`.***')
+                await self.edit_inventory(user, 'Small Gold Pack', 1)
             except Forbidden as error:
                 logging.warning(error)
 
@@ -177,8 +178,8 @@ class GamBot(commands.Bot):
         return True if (await self.user_data(user))[8] else False
 
     async def toggle_blacklist(self, user: User) -> None:
-        blacklisted = 1 if await self.is_blacklisted(user) else 0
-        await self.db.execute('UPdATE user_data SET blacklisted = ? WHERE id = ?', (blacklisted, user.id))
+        blacklisted = 0 if await self.is_blacklisted(user) else 1
+        await self.db.execute('UPDATE user_data SET blacklisted = ? WHERE id = ?', (blacklisted, user.id))
         await self.db.commit()
 
     async def has_premium(self, user: User) -> bool:
@@ -285,6 +286,7 @@ class GamBot(commands.Bot):
         await self.db.execute('DELETE FROM inventories WHERE id = ?', (user_id,))
         await self.db.execute('DELETE FROM active_boosts WHERE id = ?', (user_id,))
         await self.db.commit()
+        logging.info(f'Wiped data associated with user ID: {user_id}')
 
     @tasks.loop(seconds=30)
     async def update_data(self):
@@ -299,7 +301,6 @@ class GamBot(commands.Bot):
             try:
                 user = await self.fetch_user(boost[0])
             except (NotFound, HTTPException):
-                logging.warning(f'Unknown user ID: {boost[0]} - Wiping associated data...')
                 await self.wipe(boost[0])
                 continue
 
@@ -352,6 +353,7 @@ class GamBot(commands.Bot):
             try:
                 user = await self.fetch_user(entry[0])
             except (NotFound, HTTPException):
+                await self.wipe(entry[0])
                 continue
 
             await self.edit_inventory(user, 'Large Money Pack', 1)
