@@ -245,8 +245,8 @@ class GamBot(commands.Bot):
         await self.db.commit()
         try:
             await interaction.channel.send(
-                f'{user.mention} just earned the achievement: `{achievements_mapping[achievement][0]}`. '
-                f'They win `$100,000` and an XP bonus!')
+                f'**{user.mention} just earned the achievement: `{achievements_mapping[achievement][0]}`!**\n'
+                f'**They win `$100,000` and an XP bonus!**')
         except Forbidden as error:
             logging.warning(error)
         await self.edit_balances(interaction, user, money_d=100000, xp_d=5000)

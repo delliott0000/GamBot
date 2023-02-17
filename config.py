@@ -68,3 +68,16 @@ rank_mapping = {
     6: 'Semi-Pro',
     7: 'Pro',
     8: 'Expert'}
+
+wheel_mapping = {
+    1: ('green', 'https://cdn.discordapp.com/emojis/991767837242822828.webp?size=128&quality=lossless', 1000, 3000),
+    2: ('blue', 'https://cdn.discordapp.com/emojis/991767561379254333.webp?size=128&quality=lossless', 5000, 8500),
+    3: ('purple', 'https://cdn.discordapp.com/emojis/991767912085987348.webp?size=128&quality=lossless', 12000, 18000),
+    4: ('red', 'https://cdn.discordapp.com/emojis/991767644627808336.webp?size=128&quality=lossless', 25000, 35000),
+    5: ('pink', 'https://cdn.discordapp.com/emojis/991767672041787483.webp?size=128&quality=lossless', 60000, 100000),
+    6: ('gold', 'https://cdn.discordapp.com/emojis/991767615603228743.webp?size=128&quality=lossless', 250000, 250000)}
+
+slot_num_to_emote = {
+    1: '<:White:1037198176068841522>', 2: '<:Green:1037198197199745065>', 3: '<:Blue:1037198209128337521>',
+    4: '<:Purple:1037198226727641149>', 5: '<:Red:1037198238144548914>', 6: '<:Pink:1037198248596742144>',
+    7: '<:Yellow:1037198261875908638>', 8: '<:Rainbow_1:1037198949347500042>', 9: '<:Rainbow_2:1037198961552920596>'}

@@ -8,7 +8,11 @@ from discord import (
     User,
     Embed
 )
-from config import emoji_cost_mapping, pack_mapping, boost_mapping
+from config import (
+    emoji_cost_mapping,
+    pack_mapping,
+    boost_mapping
+)
 from random import randint, choice
 
 
