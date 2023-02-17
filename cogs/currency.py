@@ -1,3 +1,4 @@
+from main import GamBot
 from discord.ext import (
     commands
 )
@@ -6,9 +7,8 @@ from discord import (
     Interaction,
     User
 )
-from math import sqrt, floor
+from math import floor
 from random import randint
-from main import GamBot
 
 
 class Currency(commands.Cog):
@@ -60,8 +60,9 @@ class Currency(commands.Cog):
             return
 
         xp = await self.bot.xp(user)
+        rank = await self.bot.rank(user)
         await self.bot.response(
-            interaction, f'{user.mention}\'s total XP is `{xp:,} XP (rank {floor(sqrt(xp / 8561) + 1)})`.',
+            interaction, f'{user.mention}\'s total XP is `{xp:,} XP (rank {rank})`.',
             self.bot.colour(interaction.guild))
 
     @app_commands.command(name='gift', description='Gift some GamBot $ to another user.')

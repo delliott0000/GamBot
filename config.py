@@ -11,10 +11,21 @@ START_CASH = getenv('START_CASH')
 START_GOLD = getenv('START_GOLD')
 
 achievements_mapping = {
-    'bj_max': 'Doubling Down', 'bj_sevens': 'Triple 7s', 'rou_mil': 'On The Ball', 'rou_zero': 'The Forgotten Number',
-    'poker_sf': 'Straight Flush', 'poker_max': 'All In', 'hl_max': 'Higher And Higher', 'hl_str': 'Lucky Streak',
-    'slot_jack': '1 In A Million', 'spin_jack': 'A Special Prize', 'lott_win': 'Early Retirement',
-    'scrat_win': '3 Shiny Diamonds', 'mill': 'Millionaire', 'bill': 'Billionaire', 'legend': 'Legend'}
+    'bj_max': ('Doubling Down', 'In Blackjack, win after doubling down on the max bet.'),
+    'bj_sevens': ('Triple 7s', 'In Blackjack, get to 21 points by having 3 sevens.'),
+    'rou_mil': ('On The Ball', 'Win over `$1,000,000` from a single game of Roulette.'),
+    'rou_zero': ('The Forgotten Number', 'Bet `$25,000` or more on the number `0` in roulette and win.'),
+    'poker_sf': ('Straight Flush', 'In Poker, win the game by having a straight flush or better.'),
+    'poker_max': ('All In', 'In Poker, win and take home a total prize of `$1,000,000` or more.'),
+    'hl_max': ('Higher And Higher', 'In Higher Or Lower, win `$800,000` or more from a single game.'),
+    'hl_str': ('Lucky Streak', 'Make it to a streak of 25 cards in Higher Or Lower.'),
+    'slot_jack': ('1 In A Million', 'Hit the ultimate Jackpot on the slots machine.'),
+    'spin_jack': ('A Special Prize', 'Spin the lucky wheel and land on the Jackpot prize.'),
+    'lott_win': ('Early Retirement', 'Get lucky on the lottery and take home a huge prize!'),
+    'scrat_win': ('3 Shiny Diamonds', 'Purchase a scratch card and win a rare item.'),
+    'mill': ('Millionaire', 'Accumulate `$1,000,000` of wealth in GamBot money.'),
+    'bill': ('Billionaire', 'Wait, how long did it take you to get this achievement?'),
+    'legend': ('Legend', 'Achieve the rank of Legend (rank 9 or higher).')}
 
 pack_mapping = {
     'Small Money Pack': ('money_pack_s', 10000, 15000, 0, 0),
@@ -32,3 +43,13 @@ boost_mapping = {
     'Common XP Booster': ('xp_boost_c', 0, 0.2, 3600),
     'Rare XP Booster': ('xp_boost_r', 0, 0.5, 21600),
     'Epic XP Booster': ('xp_boost_e', 0, 1.0, 86400)}
+
+rank_mapping = {
+    1: 'Rookie',
+    2: 'Novice',
+    3: 'Trained',
+    4: 'Experienced',
+    5: 'Skilled',
+    6: 'Semi-Pro',
+    7: 'Pro',
+    8: 'Expert'}

@@ -48,7 +48,7 @@ class GamBot(commands.Bot):
     def __init__(self):
         super().__init__(
             intents=Intents.default(),
-            command_prefix=None,
+            command_prefix='',
             help_command=None,
             activity=Activity(type=ActivityType.watching, name=ACTIVITY)
         )
@@ -240,7 +240,7 @@ class GamBot(commands.Bot):
         await self.db.commit()
         try:
             await interaction.channel.send(
-                f'{user.mention} just earned the achievement: `{achievements_mapping[achievement]}`. '
+                f'{user.mention} just earned the achievement: `{achievements_mapping[achievement][0]}`. '
                 f'They win `$100,000` and an XP bonus!')
         except Forbidden as error:
             logging.warning(error)
@@ -269,6 +269,11 @@ class GamBot(commands.Bot):
     async def item_shop(self):
         cursor = await self.db.execute('SELECT * FROM daily_shop')
         return await cursor.fetchone()
+
+    async def leaderboard(self, lb_type: str):
+        cursor = await self.db.execute(f'SELECT id, {lb_type.lower()} FROM user_data')
+        data = await cursor.fetchall()
+        return sorted(data, key=lambda x: x[1], reverse=True)
 
     async def wipe(self, user_id: int):
         await self.db.execute('DELETE FROM user_data WHERE id = ?', (user_id,))
