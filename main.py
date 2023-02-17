@@ -312,11 +312,12 @@ class GamBot(commands.Bot):
         await self.db.commit()
 
     @tasks.loop(seconds=10)
-    async def wait_for_daily(self):
+    async def wait_for_rotation(self):
         if strftime('%H:%M') == '00:00':
             self.daily_reset.start()
-            self.wait_for_daily.stop()
-            logging.info('Daily loop started!')
+            self.weekly_reward.start()
+            self.wait_for_rotation.stop()
+            logging.info('Daily/weekly rotation started!')
 
     @tasks.loop(hours=24)
     async def daily_reset(self):
@@ -342,6 +343,23 @@ class GamBot(commands.Bot):
 
         self.next_reset_time = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
 
+    @tasks.loop(hours=168)
+    async def weekly_reward(self):
+        cursor = await self.db.execute('SELECT id FROM user_data WHERE premium = ?', (1,))
+        premium_users = await cursor.fetchall()
+
+        for entry in premium_users:
+            try:
+                user = await self.fetch_user(entry[0])
+            except (NotFound, HTTPException):
+                continue
+
+            await self.edit_inventory(user, 'Large Money Pack', 1)
+            await self.edit_inventory(user, 'Medium Gold Pack', 1)
+            await asyncio.sleep(0.2)
+
+        await self.db.commit()
+
     async def cog_app_command_error(self, interaction: Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CommandOnCooldown):
             await self.bad_response(interaction, f'❌ You\'re on cooldown. Try again in `{floor(error.retry_after)}s`.')
@@ -364,7 +382,7 @@ class GamBot(commands.Bot):
 
         logging.info('Starting background tasks...')
         self.update_data.start()
-        self.wait_for_daily.start()
+        self.wait_for_rotation.start()
 
         logging.info('Syncing commands...')
         await self.tree.sync()
@@ -409,8 +427,9 @@ class GamBot(commands.Bot):
             except AttributeError:
                 pass
             self.update_data.stop()
-            self.wait_for_daily.stop()
+            self.wait_for_rotation.stop()
             self.daily_reset.stop()
+            self.weekly_reward.stop()
 
         try:
             asyncio.run(runner())
