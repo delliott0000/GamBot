@@ -44,6 +44,21 @@ boost_mapping = {
     'Rare XP Booster': ('xp_boost_r', 0, 0.5, 21600),
     'Epic XP Booster': ('xp_boost_e', 0, 1.0, 86400)}
 
+emoji_cost_mapping = {
+    'Common Payout Booster': ('<:Blue:1037198209128337521>', 10),
+    'Rare Payout Booster': ('<:Red:1037198238144548914>', 25),
+    'Epic Payout Booster': ('<:Yellow:1037198261875908638>', 50),
+    'Common XP Booster': ('<:Green:1037198197199745065>', 5),
+    'Rare XP Booster': ('<:Purple:1037198226727641149>', 15),
+    'Epic XP Booster': ('<:Pink:1037198248596742144>', 30),
+    'Small Money Pack': ('<:coin1:1058406791198818364>', 5),
+    'Medium Money Pack': ('<:coin2:1058406808097669151>', 8),
+    'Large Money Pack': ('<:coin3:1058406820382773389>', 15),
+    'Small Gold Pack': ('<:gold:1058395878190223380>', 8),
+    'Medium Gold Pack': ('<:gold2:1058397872997023775>', 22),
+    'Large Gold Pack': ('<:gold3:1058398446962360442>', 65),
+    'Jackpot Pack': ('<:Rainbow_2:1037198961552920596>', 100)}
+
 rank_mapping = {
     1: 'Rookie',
     2: 'Novice',

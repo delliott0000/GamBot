@@ -6,6 +6,7 @@ from pathlib import Path
 from math import floor, sqrt
 from time import strftime
 from random import sample
+from datetime import date, datetime
 
 from config import (
     achievements_mapping,
@@ -54,6 +55,7 @@ class GamBot(commands.Bot):
             activity=Activity(type=ActivityType.watching, name=ACTIVITY)
         )
         self.db = None
+        self.next_reset_time = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
         self.tree.on_error = self.cog_app_command_error
 
     @property
@@ -337,6 +339,8 @@ class GamBot(commands.Bot):
                                   '(?, ?, ?, ?, ?, ?)', new_items)
 
         await self.db.commit()
+
+        self.next_reset_time = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
 
     async def cog_app_command_error(self, interaction: Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CommandOnCooldown):
