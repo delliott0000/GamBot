@@ -23,6 +23,7 @@ try:
     from discord.ext import commands, tasks
     from discord import (
         __version__ as __discord__,
+        app_commands,
         utils,
         Intents,
         Activity,
@@ -53,6 +54,7 @@ class GamBot(commands.Bot):
             activity=Activity(type=ActivityType.watching, name=ACTIVITY)
         )
         self.db = None
+        self.tree.on_error = self.cog_app_command_error
 
     @property
     def _token(self):
@@ -335,6 +337,19 @@ class GamBot(commands.Bot):
                                   '(?, ?, ?, ?, ?, ?)', new_items)
 
         await self.db.commit()
+
+    async def cog_app_command_error(self, interaction: Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.CommandOnCooldown):
+            await self.bad_response(interaction, f'❌ You\'re on cooldown. Try again in `{floor(error.retry_after)}s`.')
+
+        elif isinstance(error, app_commands.BotMissingPermissions):
+            await self.bad_response(
+                interaction,
+                f'❌ Bot missing required permissions: `{"".join(error.missing_permissions).replace("_", " ")}`.')
+
+        else:
+            await self.bad_response(interaction, f'An unexpected error occurred: {str(error)}')
+            logging.error(f'An unexpected error occurred: {str(error)}')
 
     async def setup_hook(self) -> None:
         logging.info('Setting up database...')

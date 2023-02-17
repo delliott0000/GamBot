@@ -33,18 +33,16 @@ class Profile(commands.Cog):
             await self.bot.bad_response(interaction, '❌ That user is a bot.')
             return
 
-        data = await self.bot.user_data(user)
-
         profile_embed = Embed(colour=self.bot.colour(interaction.guild), description=user.mention)
         profile_embed.set_author(name='GamBot Profile', icon_url=self.bot.user.avatar)
         profile_embed.set_thumbnail(url=user.avatar if user.avatar else user.default_avatar)
 
         profile_embed.add_field(name='💸 Total Money:',
-                                value=f'> `${data[1]:,}`')
+                                value=f'> `${await self.bot.money(user):,}`')
         profile_embed.add_field(name='<:gold:1058395878190223380> Total Gold:',
-                                value=f'> `{data[2]:,}`')
+                                value=f'> `{await self.bot.gold(user):,}`')
         profile_embed.add_field(name='♦ Total XP:',
-                                value=f'> `{data[3]:,}`')
+                                value=f'> `{await self.bot.xp(user):,}`')
 
         rank = await self.bot.rank(user)
         try:
@@ -54,15 +52,17 @@ class Profile(commands.Cog):
             profile_embed.add_field(
                 name='🥇 Rank:', value=f'> `Rank {rank} (Legend)`', inline=False)
 
-        profile_embed.add_field(name='🎲 Payout Multiplier:', value=f'> `x{round(data[4], 4)}`', inline=True)
-        profile_embed.add_field(name='💡 XP Multiplier:', value=f'> `x{round(data[5], 4)}`', inline=True)
+        profile_embed.add_field(
+            name='🎲 Payout Multiplier:', value=f'> `x{round(await self.bot.pay_mult(user), 2)}`', inline=True)
+        profile_embed.add_field(
+            name='💡 XP Multiplier:', value=f'> `x{round(await self.bot.xp_mult(user), 2)}`', inline=True)
 
         profile_embed.add_field(name='💎 Premium:',
-                                value=f'> `{"True" if data[9] else "False"}`', inline=False)
+                                value=f'> `{await self.bot.has_premium(user)}`', inline=False)
         profile_embed.add_field(name='📅 Daily Claimed:',
-                                value=f'> `{"True" if data[6] else "False"}`', inline=True)
+                                value=f'> `{await self.bot.daily_claimed(user)}`', inline=True)
         profile_embed.add_field(name='📌 Consecutive Dailies:',
-                                value=f'> `{data[7]:,}`', inline=True)
+                                value=f'> `{await self.bot.cons_dailies(user):,}`', inline=True)
 
         await interaction.response.send_message(embed=profile_embed)
 
