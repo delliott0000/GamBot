@@ -63,6 +63,8 @@ class GamBot(commands.Bot):
         self.support = SUPPORT
         self.vote = VOTE
 
+        self.app_commands = []
+
         self.next_reset_time = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
 
         self.tree.on_error = self.cog_app_command_error
@@ -430,7 +432,7 @@ class GamBot(commands.Bot):
         self.wait_for_rotation.start()
 
         logging.info('Syncing commands...')
-        await self.tree.sync()
+        self.app_commands = await self.tree.sync()
 
         logging.info(f'Logging in as {self.user} (ID: {self.user.id})...')
 
@@ -479,7 +481,7 @@ class GamBot(commands.Bot):
         try:
             asyncio.run(runner())
         except (KeyboardInterrupt, SystemExit):
-            logging.info("Received signal to terminate bot and event loop.")
+            logging.info('Received signal to terminate bot and event loop.')
         finally:
             logging.info('Cleaning up tasks and connections...')
             asyncio.run(cancel_tasks())

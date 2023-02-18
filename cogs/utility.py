@@ -5,11 +5,13 @@ from discord.ext import (
 from discord import (
     app_commands,
     Interaction,
-    User
+    User,
+    Embed
 )
 from datetime import timedelta
 from time import time
 from math import floor
+import logging
 
 
 class Utility(commands.Cog):
@@ -33,6 +35,55 @@ class Utility(commands.Cog):
         await self.bot.response(interaction,
                                 f'***Current uptime: `{timedelta(seconds=floor(time() - self.time))}`***\n\n'
                                 f'***Online since: <t:{floor(self.time)}:F>***', self.bot.colour(interaction.guild))
+
+    @app_commands.command(name='help', description='View information on GamBot\'s commands and features.')
+    async def help(self, interaction: Interaction, command: str = None):
+        if await self.bot.is_blacklisted(interaction.user):
+            await self.bot.blacklisted_response(interaction)
+            return
+        elif command and command not in [cmd.name for cmd in self.bot.app_commands]:
+            await self.bot.bad_response(interaction, f'❌ Command `{command}` not found.')
+            return
+
+        if command:
+            app_command = [cmd for cmd in self.bot.app_commands if cmd.name == command][0]
+
+            help_embed = Embed(
+                colour=self.bot.colour(interaction.guild),
+                title=f'{app_command.name.capitalize()} Command',
+                description=app_command.mention)
+            help_embed.set_author(name='GamBot Help Menu', icon_url=self.bot.user.avatar)
+            help_embed.set_footer(text='Use /help to view all commands.')
+            help_embed.add_field(name='Description', value=app_command.description,  inline=False)
+
+            opt_map = {True: '', False: 'opt'}
+            help_embed.add_field(
+                name='Usage',
+                value=f'`/{app_command.name} '
+                      f'{" ".join([f"{opt_map[option.required]}<{option.name}>" for option in app_command.options])}`',
+                inline=False)
+
+        else:
+            help_embed = Embed(
+                colour=self.bot.colour(interaction.guild),
+                title='All Commands')
+            help_embed.set_author(name='GamBot Help Menu', icon_url=self.bot.user.avatar)
+            help_embed.set_footer(text='Use /help <command> for more info on a single command.')
+
+            for cog in self.bot.cogs:
+                cog_app_commands = self.bot.get_cog(cog).get_app_commands()
+                app_cmds = [cmd for cmd in self.bot.app_commands if cmd.name in [c.name for c in cog_app_commands]]
+                help_embed.add_field(name=cog, value=" ".join([cmd.mention for cmd in app_cmds]), inline=False)
+
+        await interaction.response.send_message(embed=help_embed, ephemeral=True)
+
+    @help.autocomplete('command')
+    async def help_autocomplete(self, interaction: Interaction, current: str) -> list[app_commands.Choice[str]]:
+        item_list = []
+        for item in [cmd.name for cmd in self.bot.app_commands]:
+            if current.lower() in item.lower() and len(item_list) < 25:
+                item_list.append(app_commands.Choice(name=item, value=item))
+        return item_list
 
     @app_commands.command(name='editbal', description='Edit another user\'s money, gold or XP balance.')
     @app_commands.describe(user='Whose balance do you want to edit?')
@@ -143,6 +194,15 @@ class Utility(commands.Cog):
         await self.bot.wipe(user.id)
         await self.bot.response(
             interaction, f'Successfully wiped {user.mention}\'s data.', self.bot.colour(interaction.guild))
+
+    @app_commands.command(name='terminate', description='Terminates the bot process.')
+    async def terminate(self, interaction: Interaction):
+        if interaction.user.id not in self.bot.owner_ids:
+            await self.bot.bad_response(interaction, '❌ This command is owner-only.')
+            return
+        logging.info('Received signal to terminate bot and event loop.')
+        await self.bot.response(interaction, 'Bot process terminated.', self.bot.colour(interaction.guild))
+        await self.bot.close()
 
 
 async def setup(bot: GamBot):
