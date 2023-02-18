@@ -1,4 +1,5 @@
 from main import GamBot
+from core.slots import SlotsView
 from discord.ext import (
     commands
 )
@@ -91,6 +92,7 @@ class Games(commands.Cog):
         for n in range(3):
             results.append(choices(range(1, 10), [20, 18, 16, 14, 12, 10, 7, 2, 1])[0])
 
+        winnings_mult = 0
         if results in [[1, 1, 1], [2, 2, 2], [3, 3, 3]]:
             winnings_mult = results[0]
         elif results == [4, 4, 4]:
@@ -112,8 +114,6 @@ class Games(commands.Cog):
                 winnings_mult = 15
             elif eights_count == 3:
                 winnings_mult = 50
-            else:
-                winnings_mult = 0
 
         winnings = floor(bet * winnings_mult * await self.bot.pay_mult(interaction.user))
         xp_gain = floor(bet * winnings_mult * await self.bot.xp_mult(interaction.user) / 100)
@@ -128,7 +128,7 @@ class Games(commands.Cog):
         else:
             slot_e.add_field(name='Loser!', value=f'😔 You won nothing this time. Try again!', inline=False)
 
-        await interaction.edit_original_response(embed=slot_e)
+        await interaction.edit_original_response(embed=slot_e, view=SlotsView(self.bot, interaction))
 
     @app_commands.command(name='spin', description='Spin the lucky wheel for a reward!')
     @app_commands.checks.cooldown(1, 3600)
