@@ -82,7 +82,7 @@ class Currency(commands.Cog):
         await self.bot.edit_balances(interaction, user, money_d=amount)
 
         await self.bot.response(
-            interaction, f'Gifted `${amount:,}` to {user.mention}.', self.bot.colour(interaction.guild))
+            interaction, f'***Gifted `${amount:,}` to {user.mention}!***', self.bot.colour(interaction.guild))
 
     @app_commands.command(name='daily', description='Claim your daily GamBot reward!')
     async def daily(self, interaction: Interaction):
@@ -94,13 +94,13 @@ class Currency(commands.Cog):
             return
 
         cons_dailies = await self.bot.cons_dailies(interaction.user)
-        money = floor(randint(25000, 30000) * (1.05 ** cons_dailies))
-        xp = floor(randint(500, 750) * (1.05 ** cons_dailies))
+        money = floor(randint(25000, 30000) * await self.bot.pay_mult(interaction.user) * (1.05 ** cons_dailies))
+        xp = floor(randint(500, 750) * await self.bot.xp_mult(interaction.user) * (1.05 ** cons_dailies))
         await self.bot.edit_balances(interaction, interaction.user, money_d=money, xp_d=xp)
         await self.bot.add_daily(interaction.user)
 
         await self.bot.response(
-            interaction, f'Claimed `${money:,}` and `{xp:,} XP`.', self.bot.colour(interaction.guild))
+            interaction, f'***Claimed `${money:,}` and `{xp:,} XP`!***', self.bot.colour(interaction.guild))
 
 
 async def setup(bot: GamBot):
