@@ -1,5 +1,4 @@
 from main import GamBot
-from core.slots import SlotsView
 from discord.ext import (
     commands
 )
@@ -13,6 +12,10 @@ from config import (
     slot_num_to_emote,
     roulette_listings as r_l,
     rou_nums_to_emotes as r_n_e
+)
+from core.slots import SlotsView
+from core.cards import (
+    HigherOrLower
 )
 from random import (
     choice,
@@ -235,6 +238,9 @@ class Games(commands.Cog):
             return
 
         await self.bot.edit_balances(interaction, interaction.user, money_d=bet * -1)
+
+        hl_game = HigherOrLower(self.bot, interaction, bet)
+        await interaction.response.send_message(embed=hl_game, view=hl_game)
 
     @roulette.autocomplete('item')
     async def rou_autocomplete(self, interaction: Interaction, current: str) -> list[app_commands.Choice[str]]:
