@@ -220,6 +220,22 @@ class Games(commands.Cog):
 
         await interaction.edit_original_response(embed=rou_s)
 
+    @app_commands.command(name='higherorlower', description='Guess whether the next card will be higher or lower! '
+                                                            'Remember, Spades > Hearts > Diamonds > Clubs.')
+    @app_commands.describe(bet='How much money would you like to bet?')
+    async def higherorlower(self, interaction: Interaction, bet: int):
+        if await self.bot.is_blacklisted(interaction.user):
+            await self.bot.blacklisted_response(interaction)
+            return
+        elif not 1 <= bet <= 100000:
+            await self.bot.bad_response(interaction, '❌ Bets must be between `$1` and `$100,000`.')
+            return
+        elif await self.bot.money(interaction.user) < bet:
+            await self.bot.bad_response(interaction, '❌ You can\'t afford that bet.')
+            return
+
+        await self.bot.edit_balances(interaction, interaction.user, money_d=bet * -1)
+
     @roulette.autocomplete('item')
     async def rou_autocomplete(self, interaction: Interaction, current: str) -> list[app_commands.Choice[str]]:
         item_list = []
