@@ -20,7 +20,7 @@ class Inventory(commands.Cog):
     def __init__(self, bot: GamBot):
         self.bot = bot
 
-    @app_commands.command(name='inventory', description='View your own or another user\'s GamBot inventory.')
+    @app_commands.command(name='inventory', description='View your own or another user\'s inventory.')
     @app_commands.describe(user='Whose profile would you like to view?')
     async def inventory(self, interaction: Interaction, user: User = None):
         if not user:
@@ -35,7 +35,7 @@ class Inventory(commands.Cog):
         data = await self.bot.inventory(user)
 
         inventory_embed = Embed(colour=self.bot.colour(interaction.guild), description=user.mention)
-        inventory_embed.set_author(name='GamBot Inventory', icon_url=self.bot.user.avatar)
+        inventory_embed.set_author(name=f'{self.bot.user.name} Inventory', icon_url=self.bot.user.avatar)
         inventory_embed.set_thumbnail(url=user.avatar if user.avatar else user.default_avatar)
 
         for item in data:
@@ -60,7 +60,7 @@ class Inventory(commands.Cog):
         data = await self.bot.boosts(user)
 
         boosts_embed = Embed(colour=self.bot.colour(interaction.guild), description=user.mention)
-        boosts_embed.set_author(name='GamBot Boosts', icon_url=self.bot.user.avatar)
+        boosts_embed.set_author(name=f'{self.bot.user.name} Boosts', icon_url=self.bot.user.avatar)
         boosts_embed.set_thumbnail(url=user.avatar if user.avatar else user.default_avatar)
 
         for item in data:
@@ -144,7 +144,7 @@ class Inventory(commands.Cog):
         shop_embed = Embed(
             colour=self.bot.colour(interaction.guild), title='Currently For Sale:',
             description=f'**Resets on <t:{self.bot.next_reset_time}:F>**')
-        shop_embed.set_author(name='GamBot Daily Shop', icon_url=self.bot.user.avatar)
+        shop_embed.set_author(name=f'{self.bot.user.name} Daily Shop', icon_url=self.bot.user.avatar)
 
         daily_shop = await self.bot.item_shop()
 

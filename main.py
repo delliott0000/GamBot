@@ -376,7 +376,7 @@ class GamBot(commands.Bot):
     def assist_embed(self, guild: Optional[Guild]):
         assist_embed = Embed(
             colour=self.colour(guild),
-            title='♦ GamBot! ♦',
+            title=f'♦ {self.user.name} ♦',
             description='Hello! I\'m a bot built to play fun games such as Blackjack, Roulette, Poker and more. '
                         'I also feature a built-in currency system, profiles, XP/ranking and many more features.\n\n'
                         '**Use `/help` to view a full list of my commands. Popular commands include:\n'

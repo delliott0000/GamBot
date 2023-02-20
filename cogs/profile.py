@@ -21,7 +21,7 @@ class Profile(commands.Cog):
     def __init__(self, bot: GamBot):
         self.bot = bot
 
-    @app_commands.command(name='profile', description='View your own or another user\'s GamBot profile.')
+    @app_commands.command(name='profile', description='View your own or another user\'s profile.')
     @app_commands.describe(user='Whose profile would you like to view?')
     async def profile(self, interaction: Interaction, user: User = None):
         if not user:
@@ -34,7 +34,7 @@ class Profile(commands.Cog):
             return
 
         profile_embed = Embed(colour=self.bot.colour(interaction.guild), description=user.mention)
-        profile_embed.set_author(name='GamBot Profile', icon_url=self.bot.user.avatar)
+        profile_embed.set_author(name=f'{self.bot.user.name} Profile', icon_url=self.bot.user.avatar)
         profile_embed.set_thumbnail(url=user.avatar if user.avatar else user.default_avatar)
 
         profile_embed.add_field(name='💸 Total Money:',
@@ -66,7 +66,7 @@ class Profile(commands.Cog):
 
         await interaction.response.send_message(embed=profile_embed)
 
-    @app_commands.command(name='achievements', description='View your own or another user\'s GamBot achievements.')
+    @app_commands.command(name='achievements', description='View your own or another user\'s achievements.')
     @app_commands.describe(user='Whose achievements would you like to view?')
     async def achievements(self, interaction: Interaction, user: User = None):
         if not user:
@@ -83,7 +83,7 @@ class Profile(commands.Cog):
         achievements_embed = Embed(
             colour=self.bot.colour(interaction.guild),
             description=f'{user.mention} **(Total Achievements: `{len([a[1] for a in data.items() if a[1]])}/15`)**')
-        achievements_embed.set_author(name='GamBot Achievements', icon_url=self.bot.user.avatar)
+        achievements_embed.set_author(name=f'{self.bot.user.name} Achievements', icon_url=self.bot.user.avatar)
 
         for a in data:
             achievements_embed.add_field(
@@ -92,7 +92,7 @@ class Profile(commands.Cog):
 
         await interaction.response.send_message(embed=achievements_embed)
 
-    @app_commands.command(name='leaderboard', description='View the richest and highest-ranking GamBot users!')
+    @app_commands.command(name='leaderboard', description='View the richest and highest-ranking users!')
     @app_commands.describe(view='Which leaderboard would you like to view?')
     @app_commands.checks.cooldown(1, 60)
     @app_commands.choices(view=[
@@ -110,7 +110,8 @@ class Profile(commands.Cog):
             data = data[:10]
 
         leaderboard_embed = Embed(colour=self.bot.colour(interaction.guild), description='**Top 10 Users**')
-        leaderboard_embed.set_author(name=f'💎 👑 GamBot {view.name} Leaderboard 👑 💎', icon_url=self.bot.user.avatar)
+        leaderboard_embed.set_author(
+            name=f'💎 👑 {self.bot.user.name} {view.name} Leaderboard 👑 💎', icon_url=self.bot.user.avatar)
 
         medals_mapping = {0: '🥇', 1: '🥈', 2: '🥉', 3: '', 4: '', 5: '', 6: '', 7: '', 8: '', 9: ''}
         format_mapping = {'Money': ('$', ''), 'Gold': ('', ' Gold'), 'XP': ('', ' XP (Rank <rank>)')}

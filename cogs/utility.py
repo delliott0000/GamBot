@@ -36,7 +36,7 @@ class Utility(commands.Cog):
                                 f'***Current uptime: `{timedelta(seconds=floor(time() - self.time))}`***\n\n'
                                 f'***Online since: <t:{floor(self.time)}:F>***', self.bot.colour(interaction.guild))
 
-    @app_commands.command(name='help', description='View information on GamBot\'s commands and features.')
+    @app_commands.command(name='help', description='View information about the bot\'s commands and features.')
     async def help(self, interaction: Interaction, command: str = None):
         if await self.bot.is_blacklisted(interaction.user):
             await self.bot.blacklisted_response(interaction)
@@ -52,7 +52,7 @@ class Utility(commands.Cog):
                 colour=self.bot.colour(interaction.guild),
                 title=f'{app_command.name.capitalize()} Command',
                 description=app_command.mention)
-            help_embed.set_author(name='GamBot Help Menu', icon_url=self.bot.user.avatar)
+            help_embed.set_author(name=f'{self.bot.user.name} Help Menu', icon_url=self.bot.user.avatar)
             help_embed.set_footer(text='Use /help to view all commands.')
             help_embed.add_field(name='Description', value=app_command.description,  inline=False)
 
@@ -67,7 +67,7 @@ class Utility(commands.Cog):
             help_embed = Embed(
                 colour=self.bot.colour(interaction.guild),
                 title='All Commands')
-            help_embed.set_author(name='GamBot Help Menu', icon_url=self.bot.user.avatar)
+            help_embed.set_author(name=f'{self.bot.user.name} Help Menu', icon_url=self.bot.user.avatar)
             help_embed.set_footer(text='Use /help <command> for more info on a single command.')
 
             for cog in self.bot.cogs:
@@ -110,7 +110,7 @@ class Utility(commands.Cog):
                          f'{f" {bal_type.name}" if bal_type.name != "Money" else ""}`.',
             self.bot.colour(interaction.guild))
 
-    @app_commands.command(name='editinv', description='Edit another user\'s GamBot inventory.')
+    @app_commands.command(name='editinv', description='Edit another user\'s inventory.')
     @app_commands.describe(user='Whose inventory do you want to edit?')
     @app_commands.describe(item_type='Which item type do you wish to edit?')
     @app_commands.describe(amount='By how much do you wish to edit this user\'s item count?')
@@ -141,7 +141,7 @@ class Utility(commands.Cog):
             interaction, f'Edited {user.mention}\'s inventory by `{amount}x {item_type.name}`.',
             self.bot.colour(interaction.guild))
 
-    @app_commands.command(name='addpremium', description='Give another user GamBot premium.')
+    @app_commands.command(name='addpremium', description='Give another user premium.')
     @app_commands.describe(user='Who would you like to give premium to?')
     @app_commands.describe(duration='How long would you like them to have premium for?')
     async def addpremium(self, interaction: Interaction, user: User, duration: str):
@@ -166,7 +166,7 @@ class Utility(commands.Cog):
             interaction, f'Gave `{timedelta(seconds=resolved_duration)}` of premium to {user.mention}.',
             self.bot.colour(interaction.guild))
 
-    @app_commands.command(name='blacklist', description='Toggles the blacklisting of a GamBot user.')
+    @app_commands.command(name='blacklist', description='Un/blacklists a user from using this bot.')
     @app_commands.describe(user='Who would you like to blacklist?')
     async def blacklist(self, interaction: Interaction, user: User):
         if interaction.user.id not in self.bot.owner_ids:
@@ -181,7 +181,7 @@ class Utility(commands.Cog):
             interaction, f'{user.mention} has been {"" if await self.bot.is_blacklisted(user) else "un"}blacklisted.',
             self.bot.colour(interaction.guild))
 
-    @app_commands.command(name='wipedata', description='Wipes the specified user\'s GamBot data.')
+    @app_commands.command(name='wipedata', description='Wipes the specified user\'s data from the bot\'s database.')
     @app_commands.describe(user='Whose data do you want to wipe?')
     async def wipedata(self, interaction: Interaction, user: User):
         if interaction.user.id not in self.bot.owner_ids:

@@ -15,7 +15,9 @@ from config import (
 )
 from core.slots import SlotsView
 from core.cards import (
-    HigherOrLower
+    HigherOrLower,
+    Blackjack,
+    PokerLobby
 )
 from random import (
     choice,
@@ -241,6 +243,67 @@ class Games(commands.Cog):
 
         hl_game = HigherOrLower(self.bot, interaction, bet)
         await interaction.response.send_message(embed=hl_game, view=hl_game)
+
+    @app_commands.command(name='blackjack', description='Start a game of Blackjack against the dealer.')
+    @app_commands.describe(bet='How much money would you like to bet?')
+    async def blackjack(self, interaction: Interaction, bet: int):
+        if await self.bot.is_blacklisted(interaction.user):
+            await self.bot.blacklisted_response(interaction)
+            return
+        elif not 1 <= bet <= 100000:
+            await self.bot.bad_response(interaction, '❌ Bets must be between `$1` and `$100,000`.')
+            return
+        elif await self.bot.money(interaction.user) < bet:
+            await self.bot.bad_response(interaction, '❌ You can\'t afford that bet.')
+            return
+
+        await self.bot.edit_balances(interaction, interaction.user, money_d=bet * -1)
+
+        bj_game = Blackjack(self.bot, interaction, bet)
+        bj_game.update_embed(dealer_known=True)
+
+        if bj_game.bj_eval(bj_game.p1) == 21 and bj_game.bj_eval(bj_game.dealer) == 21:
+            winnings = bet
+            xp_gain = 0
+            bj_game.add_field(
+                name='Tie!', value=f'🧐 You and the dealer both got blackjack. You bet will be returned.', inline=False)
+
+        elif bj_game.bj_eval(bj_game.p1) == 21:
+            winnings = floor(1.5 * bet * await self.bot.pay_mult(interaction.user))
+            xp_gain = floor(1.5 * bet * await self.bot.xp_mult(interaction.user) / 100)
+            bj_game.add_field(name='Winner!', value=f'🤑 Blackjack! You `${winnings:,}!`', inline=False)
+            winnings += bet
+
+        elif bj_game.bj_eval(bj_game.dealer) == 21:
+            winnings = 0
+            xp_gain = 0
+            bj_game.add_field(name='Loser!', value=f'😭 Dealer got a blackjack, better luck next time!', inline=False)
+
+        else:
+            bj_game.update_embed()
+            await bj_game.update_button()
+            await interaction.response.send_message(embed=bj_game, view=bj_game)
+            return
+
+        await self.bot.edit_balances(interaction, interaction.user, money_d=winnings, xp_d=xp_gain)
+        await interaction.response.send_message(embed=bj_game)
+
+    @app_commands.command(name='poker', description='Start a game of Poker against your friends.')
+    @app_commands.describe(bet='What would you like the starting bet to be?')
+    async def poker(self, interaction: Interaction, bet: int = 25000):
+        if await self.bot.is_blacklisted(interaction.user):
+            await self.bot.blacklisted_response(interaction)
+            return
+        elif not 10000 <= bet <= 100000 or bet % 5:
+            await self.bot.bad_response(
+                interaction, '❌ Starting bets must be a multiple of `5` and be between `$10,000` and `$100,000`.')
+            return
+        elif await self.bot.money(interaction.user) < bet:
+            await self.bot.bad_response(interaction, '❌ You can\'t afford that bet.')
+            return
+
+        pl = PokerLobby(self.bot, interaction, bet)
+        await interaction.response.send_message(embed=pl, view=pl)
 
     @roulette.autocomplete('item')
     async def rou_autocomplete(self, interaction: Interaction, current: str) -> list[app_commands.Choice[str]]:

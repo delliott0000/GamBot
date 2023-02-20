@@ -151,3 +151,15 @@ higher_lower_emotes = {
     'higher': '<:Higher:1038546827995263066>',
     'lower': '<:Lower:1038546838426484847>',
     'walk': '<:Start:1039619761677541478>'}
+
+blackjack_emotes = {
+    'draw': '<:Draw_card:950847776483319838>',
+    'stand': '<:Stand:950777456338567228>',
+    'dd': '<:Double_down:950847793126314024>'}
+
+poker_emotes = {
+    'start': '<:Start:1039619761677541478>',
+    'seat': '👤',
+    'cancel': '<:Quit:1038538614952431786>',
+    'small_bet': '💶',
+    'big_bet': '💵'}

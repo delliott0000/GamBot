@@ -15,7 +15,7 @@ class Currency(commands.Cog):
     def __init__(self, bot: GamBot):
         self.bot = bot
 
-    @app_commands.command(name='balance', description='View your own or another user\'s GamBot $ balance.')
+    @app_commands.command(name='balance', description='View your own or another user\'s $ balance.')
     @app_commands.describe(user='Whose balance would you like to view?')
     async def balance(self, interaction: Interaction, user: User = None):
         if not user:
@@ -31,7 +31,7 @@ class Currency(commands.Cog):
             interaction, f'{user.mention}\'s total balance is `${(await self.bot.money(user)):,}`.',
             self.bot.colour(interaction.guild))
 
-    @app_commands.command(name='gold', description='View your own or another user\'s GamBot gold.')
+    @app_commands.command(name='gold', description='View your own or another user\'s gold balance.')
     @app_commands.describe(user='Whose gold would you like to view?')
     async def gold(self, interaction: Interaction, user: User = None):
         if not user:
@@ -47,7 +47,7 @@ class Currency(commands.Cog):
             interaction, f'{user.mention}\'s total gold is `{(await self.bot.gold(user)):,}` Gold.',
             self.bot.colour(interaction.guild))
 
-    @app_commands.command(name='xp', description='View your own or another user\'s GamBot XP count.')
+    @app_commands.command(name='xp', description='View your own or another user\'s XP count.')
     @app_commands.describe(user='Whose XP count would you like to view?')
     async def xp(self, interaction: Interaction, user: User = None):
         if not user:
@@ -65,7 +65,7 @@ class Currency(commands.Cog):
             interaction, f'{user.mention}\'s total XP is `{xp:,} XP (rank {rank})`.',
             self.bot.colour(interaction.guild))
 
-    @app_commands.command(name='gift', description='Gift some GamBot $ to another user.')
+    @app_commands.command(name='gift', description='Gift some money to another user.')
     @app_commands.describe(user='Who would you like to gift money to?', amount='How much money would you like to give?')
     async def gift(self, interaction: Interaction, user: User, amount: int):
         if await self.bot.is_blacklisted(interaction.user):
@@ -84,7 +84,7 @@ class Currency(commands.Cog):
         await self.bot.response(
             interaction, f'***Gifted `${amount:,}` to {user.mention}!***', self.bot.colour(interaction.guild))
 
-    @app_commands.command(name='daily', description='Claim your daily GamBot reward!')
+    @app_commands.command(name='daily', description='Claim your daily reward!')
     async def daily(self, interaction: Interaction):
         if await self.bot.is_blacklisted(interaction.user):
             await self.bot.blacklisted_response(interaction)
