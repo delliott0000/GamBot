@@ -151,11 +151,18 @@ class GamBot(commands.Bot):
         new_rank = await self.rank(user)
         if new_rank > old_rank:
             try:
+                await self.edit_inventory(user, 'Small Gold Pack', 1)
                 await interaction.channel.send(f'***{user.mention} has just reached rank {new_rank}!***\n'
                                                f'***They\'ve been awarded `x1 Small Gold Pack`.***')
-                await self.edit_inventory(user, 'Small Gold Pack', 1)
             except Forbidden as error:
                 logging.warning(error)
+
+        if money_d > 0 and new_money > 1000000:
+            await self.add_achievement(interaction, user, 'mill')
+        if money_d > 0 and new_money > 1000000000:
+            await self.add_achievement(interaction, user, 'bill')
+        if new_rank >= 9:
+            await self.add_achievement(interaction, user, 'legend')
 
     async def pay_mult(self, user: User) -> float:
         return (await self.user_data(user))[4] + ((await self.rank(user)) - 1) / 50

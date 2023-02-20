@@ -139,7 +139,7 @@ class Blackjack(ui.View, Embed, Cards):
             self.deal_card(self.dealer)
 
         Embed.__init__(self, colour=bot.colour(interaction.guild))
-        self.set_author(name='Higher Or Lower', icon_url=bot.user.avatar)
+        self.set_author(name='Blackjack', icon_url=bot.user.avatar)
 
         self.bot = bot
         self.interaction = interaction
