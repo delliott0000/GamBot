@@ -14,6 +14,7 @@ from config import (
     rou_nums_to_emotes as r_n_e
 )
 from core.slots import SlotsView
+from core.scratch import ScratchCard
 from core.cards import (
     HigherOrLower,
     Blackjack,
@@ -37,7 +38,7 @@ class Games(commands.Cog):
     @app_commands.choices(result=[
         app_commands.Choice(name='Heads', value='Heads'),
         app_commands.Choice(name='Tails', value='Tails')])
-    async def coinflip(self, interaction: Interaction, result: str, bet: int):
+    async def coinflip(self, interaction: Interaction, result: app_commands.Choice[str], bet: int):
         if await self.bot.is_blacklisted(interaction.user):
             await self.bot.blacklisted_response(interaction)
             return
@@ -55,10 +56,10 @@ class Games(commands.Cog):
             colour=self.bot.colour(interaction.guild),
             description=f'{interaction.user.mention} **(Total Bet: `${bet:,}`)**')
         result_embed.set_author(name='Coin Flip', icon_url=self.bot.user.avatar)
-        result_embed.add_field(name='Prediction:', value=f'> `{result}`', inline=False)
+        result_embed.add_field(name='Prediction:', value=f'> `{result.value}`', inline=False)
         result_embed.add_field(name='Result:', value=f'> `{real_result}`', inline=False)
 
-        if real_result == result:
+        if real_result == result.value:
             winnings = floor(bet * await self.bot.pay_mult(interaction.user))
             xp_gain = floor(bet * await self.bot.xp_mult(interaction.user) / 100)
             await self.bot.edit_balances(interaction, interaction.user, money_d=winnings + bet, xp_d=xp_gain)
@@ -134,6 +135,28 @@ class Games(commands.Cog):
             slot_e.add_field(name='Loser!', value=f'😔 You won nothing this time. Try again!', inline=False)
 
         await interaction.edit_original_response(embed=slot_e, view=SlotsView(self.bot, interaction))
+
+    @app_commands.command(name='scratchcard', description='Purchase a scratch card and try to win a prize!')
+    @app_commands.describe(tier='Which tier of card do you want to buy?')
+    @app_commands.choices(tier=[
+        app_commands.Choice(name='Common', value='10000'),
+        app_commands.Choice(name='Uncommon', value='17500'),
+        app_commands.Choice(name='Rare', value='25000'),
+        app_commands.Choice(name='Epic', value='45000'),
+        app_commands.Choice(name='Legendary', value='125000')])
+    async def scratchcard(self, interaction: Interaction, tier: app_commands.Choice[str]):
+        if await self.bot.is_blacklisted(interaction.user):
+            await self.bot.blacklisted_response(interaction)
+            return
+        elif await self.bot.money(interaction.user) < int(tier.value):
+            await self.bot.bad_response(
+                interaction, f'❌ {tier.name} scratch cards cost `${int(tier.value):,}`. You cannot afford one.')
+            return
+
+        await self.bot.edit_balances(interaction, interaction.user, int(tier.value) * -1)
+
+        scratch_card = ScratchCard(self.bot, interaction, tier)
+        await interaction.response.send_message(embed=scratch_card, view=scratch_card)
 
     @app_commands.command(name='spin', description='Spin the lucky wheel for a reward!')
     @app_commands.checks.cooldown(1, 3600)

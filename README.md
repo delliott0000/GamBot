@@ -13,4 +13,4 @@ If you wish to create your own instance of this bot, follow the instructions bel
 - Makes sure the `envvar.env` and `data.db` files are kept in the same directory as `main.py`. Do not rename either of them. These files are what store your user & configuration data, so it's recommended to back them up regularly.
 - Navigate into the GamBot directory in the terminal and run `python3 main.py`.
 
-**This project is a WIP, some features may be unfinished!**
+**This project is a WIP, some features may be unstable and/or unfinished!**

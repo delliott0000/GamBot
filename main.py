@@ -328,6 +328,8 @@ class GamBot(commands.Bot):
             if boost[1] == 'Premium':
                 await self.db.execute('UPDATE user_data SET premium = ? WHERE id = ?', (0, user.id))
 
+            await asyncio.sleep(0.1)
+
         await self.db.commit()
 
     @tasks.loop(seconds=10)
