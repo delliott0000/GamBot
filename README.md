@@ -2,7 +2,7 @@
 Discord bot for playing casino-style games in your server.
 
 # How To Use
-The "official" version of this bot can be found [here](https://discord.com/api/oauth2/authorize?client_id=948132598364930088&permissions=274878188544&scope=bot).
+The "official" version of this bot can be found [here](https://discord.com/api/oauth2/authorize?client_id=948132598364930088&permissions=274878188544&scope=bot). Simply add the bot to your server and begin! You can also join our [Discord community](https://discord.gg/vNchCfkYCE).
 
 If you wish to create your own instance of this bot, follow the instructions below:
 

@@ -336,7 +336,7 @@ class GamBot(commands.Bot):
     async def wait_for_rotation(self):
         if strftime('%H:%M') == '00:00':
             self.daily_reset.start()
-            self.weekly_reward.start()
+            self.weekly_reset.start()
             self.wait_for_rotation.stop()
             logging.info('Daily/weekly rotation started!')
 
@@ -365,7 +365,7 @@ class GamBot(commands.Bot):
         self.next_reset_time = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
 
     @tasks.loop(hours=168)
-    async def weekly_reward(self):
+    async def weekly_reset(self):
         cursor = await self.db.execute('SELECT id FROM user_data WHERE premium = ?', (1,))
         premium_users = await cursor.fetchall()
 
@@ -447,7 +447,7 @@ class GamBot(commands.Bot):
 
         try:
             self.owner_ids = set(int(user_id) for user_id in OWNERS.split(','))
-            logging.info('Owners: ' + ''.join([(await self.fetch_user(user_id)).name for user_id in self.owner_ids]))
+            logging.info('Owner(s): ' + ''.join([(await self.fetch_user(user_id)).name for user_id in self.owner_ids]))
         except (ValueError, NotFound):
             logging.fatal('Unknown/Invalid owner ID(s) passed.')
             exit(0)
@@ -485,7 +485,7 @@ class GamBot(commands.Bot):
             self.update_data.stop()
             self.wait_for_rotation.stop()
             self.daily_reset.stop()
-            self.weekly_reward.stop()
+            self.weekly_reset.stop()
 
         try:
             asyncio.run(runner())
