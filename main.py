@@ -112,6 +112,11 @@ class GamBot(commands.Bot):
         await self.db.execute(
             'create table if not exists daily_shop (item_1 text, item_2 text, item_3 text, item_4 text, item_5 text, '
             'item_6 text)')
+        await self.db.execute(
+            'create table if not exists lott_tickets (id integer)')
+        await self.db.execute(
+            'create table if not exists lott_data (money_pool integer, bi_1 text, bc_1 integer, bi_2 text, '
+            'bc_2 integer, bi_3 text, bc_3 integer, prev_winner integer, prev_winnings integer)')
         await self.db.commit()
 
     async def user_data(self, user: User) -> tuple:
@@ -136,7 +141,7 @@ class GamBot(commands.Bot):
     async def rank(self, user: User) -> int:
         return floor(sqrt((await self.xp(user)) / 8561) + 1)
 
-    async def edit_balances(self, interaction: Interaction, user: User,
+    async def edit_balances(self, interaction: Optional[Interaction], user: User,
                             money_d: int = 0, gold_d: int = 0, xp_d: int = 0) -> None:
         old_rank = await self.rank(user)
 
@@ -149,13 +154,16 @@ class GamBot(commands.Bot):
         await self.db.commit()
 
         new_rank = await self.rank(user)
+
         if new_rank > old_rank:
+            await self.edit_inventory(user, 'Small Gold Pack', 1)
             try:
-                await self.edit_inventory(user, 'Small Gold Pack', 1)
                 await interaction.channel.send(f'***{user.mention} has just reached rank {new_rank}!***\n'
                                                f'***They\'ve been awarded `x1 Small Gold Pack`.***')
             except Forbidden as error:
                 logging.warning(error)
+            except AttributeError:
+                pass
 
         if money_d > 0 and new_money > 1000000:
             await self.add_achievement(interaction, user, 'mill')
@@ -256,17 +264,21 @@ class GamBot(commands.Bot):
             'poker_max': data[6], 'hl_max': data[7], 'hl_str': data[8], 'slot_jack': data[9], 'spin_jack': data[10],
             'lott_win': data[11], 'scrat_win': data[12], 'mill': data[13], 'bill': data[14], 'legend': data[15]}
 
-    async def add_achievement(self, interaction: Interaction, user: User, achievement: str) -> None:
+    async def add_achievement(self, interaction: Optional[Interaction], user: User, achievement: str) -> None:
         if (await self.achievements(user))[achievement]:
             return
         await self.db.execute(f'UPDATE achievements SET {achievement} = ? WHERE id = ?', (1, user.id))
         await self.db.commit()
+
         try:
             await interaction.channel.send(
                 f'**{user.mention} just earned the achievement: `{achievements_mapping[achievement][0]}`!**\n'
                 f'**They win `$100,000` and an XP bonus!**')
         except Forbidden as error:
             logging.warning(error)
+        except AttributeError:
+            pass
+
         await self.edit_balances(interaction, user, money_d=100000, xp_d=5000)
 
     async def boosts(self, user: User) -> list:
@@ -274,7 +286,7 @@ class GamBot(commands.Bot):
         data = await cursor.fetchall()
         return data
 
-    async def add_boost(self, user: User, boost_type: str):
+    async def add_boost(self, user: User, boost_type: str) -> None:
         boost = boost_mapping[boost_type]
         existing = [b for b in await self.boosts(user) if b[1] == boost[0]]
         if existing:
@@ -338,7 +350,7 @@ class GamBot(commands.Bot):
             self.daily_reset.start()
             self.weekly_reset.start()
             self.wait_for_rotation.stop()
-            logging.info('Daily/weekly rotation started!')
+            logging.info('Daily & weekly rotations started!')
 
     @tasks.loop(hours=24)
     async def daily_reset(self):
@@ -378,7 +390,7 @@ class GamBot(commands.Bot):
 
             await self.edit_inventory(user, 'Large Money Pack', 1)
             await self.edit_inventory(user, 'Medium Gold Pack', 1)
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(0.1)
 
         await self.db.commit()
 
