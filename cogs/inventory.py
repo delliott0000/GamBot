@@ -141,12 +141,16 @@ class Inventory(commands.Cog):
             await self.bot.blacklisted_response(interaction)
             return
 
+        daily_shop = await self.bot.item_shop()
+
+        if not daily_shop:
+            await self.bot.bad_response(interaction, '❌ The daily shop is currently unavailable, try again later.')
+            return
+
         shop_embed = Embed(
             colour=self.bot.colour(interaction.guild), title='Currently For Sale:',
             description=f'**Resets on <t:{self.bot.next_reset_time}:F>**')
         shop_embed.set_author(name=f'{self.bot.user.name} Daily Shop', icon_url=self.bot.user.avatar)
-
-        daily_shop = await self.bot.item_shop()
 
         for item in daily_shop:
             shop_embed.add_field(
@@ -154,7 +158,7 @@ class Inventory(commands.Cog):
 
         await interaction.response.send_message(embed=shop_embed)
 
-    @app_commands.command(name='buy', description='Buy an item from the item shop.')
+    @app_commands.command(name='buy', description='Buy an item from the daily item shop.')
     @app_commands.describe(item='What type of item would you like to buy?')
     @app_commands.describe(amount='How many would you like to buy?')
     async def buy(self, interaction: Interaction, item: str, amount: int = 1):
@@ -178,10 +182,13 @@ class Inventory(commands.Cog):
     @buy.autocomplete('item')
     async def buy_autocomplete(self, interaction: Interaction, current: str) -> list[app_commands.Choice[str]]:
         item_list = []
-        for item in await self.bot.item_shop():
-            if current.lower() in item.lower():
-                item_list.append(app_commands.Choice(name=item, value=item))
-        return item_list
+        try:
+            for item in await self.bot.item_shop():
+                if current.lower() in item.lower():
+                    item_list.append(app_commands.Choice(name=item, value=item))
+            return item_list
+        except TypeError:
+            return item_list
 
 
 async def setup(bot: GamBot):
