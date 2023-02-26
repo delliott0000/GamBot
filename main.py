@@ -5,7 +5,7 @@ from typing import Optional
 from pathlib import Path
 from math import floor, sqrt
 from time import strftime
-from random import sample
+from random import sample, choice, randint
 from datetime import date, datetime
 from re import fullmatch
 
@@ -65,7 +65,8 @@ class GamBot(commands.Bot):
 
         self.app_commands = []
 
-        self.next_reset_time = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
+        self.next_daily_reset = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
+        self.next_weekly_reset = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
 
         self.tree.on_error = self.cog_app_command_error
 
@@ -301,6 +302,19 @@ class GamBot(commands.Bot):
                                   (user.id, boost[0], boost[1], boost[2], self.time_now() + boost[3]))
         await self.db.commit()
 
+    async def lott_tickets(self) -> list:
+        cursor = await self.db.execute('SELECT id FROM lott_tickets')
+        data = await cursor.fetchall()
+        return [entry[0] for entry in data]
+
+    async def add_lott_ticket(self, user: User) -> None:
+        await self.db.execute('INSERT INTO lott_tickets (id) VALUES (?)', (user.id,))
+        await self.db.commit()
+
+    async def lott_data(self) -> tuple:
+        cursor = await self.db.execute('SELECT * FROM lott_data')
+        return await cursor.fetchone()
+
     async def item_shop(self):
         cursor = await self.db.execute('SELECT * FROM daily_shop')
         return await cursor.fetchone()
@@ -374,7 +388,7 @@ class GamBot(commands.Bot):
 
         await self.db.commit()
 
-        self.next_reset_time = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
+        self.next_daily_reset = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
 
     @tasks.loop(hours=168)
     async def weekly_reset(self):
@@ -392,7 +406,49 @@ class GamBot(commands.Bot):
             await self.edit_inventory(user, 'Medium Gold Pack', 1)
             await asyncio.sleep(0.1)
 
+        lott_tickets = await self.lott_tickets()
+        lott_data = await self.lott_data()
+
+        try:
+            winner = await self.fetch_user(choice(lott_tickets))
+            total_winnings = lott_data[0] + len(lott_tickets) * 5000
+        except (NotFound, HTTPException, TypeError, IndexError):
+            winner = None
+            total_winnings = 0
+
+        if winner and total_winnings:
+
+            await self.edit_balances(None, winner, money_d=total_winnings)
+            await self.add_achievement(None, winner, 'lott_win')
+
+            t1_threshold = lott_data[0] * 6
+            t2_threshold = lott_data[0] * 16
+            t3_threshold = lott_data[0] * 40
+
+            if total_winnings >= t1_threshold:
+                await self.edit_inventory(winner, lott_data[1], lott_data[2])
+            if total_winnings >= t2_threshold:
+                await self.edit_inventory(winner, lott_data[3], lott_data[4])
+            if total_winnings >= t3_threshold:
+                await self.edit_inventory(winner, lott_data[5], lott_data[6])
+
+        await self.db.execute('DELETE FROM lott_tickets')
+        await self.db.execute('DELETE FROM lott_data')
+
+        new_lottery_data = (
+            randint(100, 500) * 10000,
+            choice(['Rare XP Booster', 'Rare Payout Booster', 'Small Gold Pack']), randint(1, 5),
+            choice(['Epic XP Booster', 'Epic Payout Booster', 'Medium Gold Pack']), randint(1, 5),
+            choice(['Large Gold Pack', 'Jackpot Pack']), randint(1, 3),
+            winner.id if winner else 0, total_winnings)
+
+        await self.db.execute(
+            'INSERT INTO lott_data (money_pool, bi_1, bc_1, bi_2, bc_2, bi_3, bc_3, prev_winner, prev_winnings) VALUES '
+            '(?, ?, ?, ?, ?, ?, ?, ?, ?)', new_lottery_data)
+
         await self.db.commit()
+
+        self.next_weekly_reset = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 604800
 
     def assist_embed(self, guild: Optional[Guild]):
         assist_embed = Embed(
@@ -404,7 +460,7 @@ class GamBot(commands.Bot):
                         '`/blackjack, /roulette, /higherorlower, /daily, /profile` . . .\n'
                         'and the list goes on!\n\n'
                         'Please ensure I have the following permissions enabled:\n'
-                        '`Read Messages, Send Messages, Embed Links, Use External Emojis`.**\n\n'
+                        '`View Channels, Send Messages (In Threads), Embed Links, Use External Emojis`.**\n\n'
                         f'[Invite Me]({self.invite}) | [Support Server]({self.support}) | [Vote For Me]({self.vote})')
         return assist_embed
 

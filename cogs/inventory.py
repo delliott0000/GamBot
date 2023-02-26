@@ -43,6 +43,11 @@ class Inventory(commands.Cog):
                 name=f'{emoji_cost_mapping[item][0]} {item}s',
                 value=f'> `{data[item]:,} {item.split(" ")[-1]}s`')
 
+        inventory_embed.add_field(
+            name='🎟️ Lottery Tickets',
+            value=f'> `{len([i for i in await self.bot.lott_tickets() if i == user.id]):,} Tickets`',
+            inline=False)
+
         await interaction.response.send_message(embed=inventory_embed)
 
     @app_commands.command(name='boosts', description='View your own or another user\'s currently-active boosts.')
@@ -144,12 +149,12 @@ class Inventory(commands.Cog):
         daily_shop = await self.bot.item_shop()
 
         if not daily_shop:
-            await self.bot.bad_response(interaction, '❌ The daily shop is currently unavailable, try again later.')
+            await self.bot.bad_response(interaction, '❌ The daily shop is temporarily unavailable, try again later.')
             return
 
         shop_embed = Embed(
             colour=self.bot.colour(interaction.guild), title='Currently For Sale:',
-            description=f'**Resets on <t:{self.bot.next_reset_time}:F>**')
+            description=f'**Resets on <t:{self.bot.next_daily_reset}:F>**')
         shop_embed.set_author(name=f'{self.bot.user.name} Daily Shop', icon_url=self.bot.user.avatar)
 
         for item in daily_shop:

@@ -5,7 +5,9 @@ from discord.ext import (
 from discord import (
     app_commands,
     Interaction,
-    Embed
+    Embed,
+    NotFound,
+    HTTPException
 )
 from config import (
     wheel_mapping,
@@ -327,6 +329,75 @@ class Games(commands.Cog):
 
         pl = PokerLobby(self.bot, interaction, bet)
         await interaction.response.send_message(embed=pl, view=pl)
+
+    @app_commands.command(name='lottery', description='View the state of the currently ongoing lottery draw!')
+    @app_commands.checks.cooldown(1, 10)
+    async def lottery(self, interaction: Interaction):
+        if await self.bot.is_blacklisted(interaction.user):
+            await self.bot.blacklisted_response(interaction)
+            return
+
+        lott_data = await self.bot.lott_data()
+
+        if not lott_data:
+            await self.bot.bad_response(interaction, '❌ The lottery is temporarily unavailable, try again later.')
+            return
+
+        total_tickets = len(await self.bot.lott_tickets())
+        winnings = lott_data[0] + total_tickets * 5000
+
+        try:
+            prev_winner = await self.bot.fetch_user(lott_data[7])
+        except (NotFound, HTTPException):
+            prev_winner = None
+
+        lott_e = Embed(
+            colour=self.bot.colour(interaction.guild),
+            description=f'**Ends on <t:{self.bot.next_weekly_reset}:F>**')
+        lott_e.set_author(name=f'Global Lottery', icon_url=self.bot.user.avatar)
+        lott_e.set_thumbnail(url='https://cdn.discordapp.com/emojis/991767526683988030.webp?size=128&quality=lossless')
+
+        lott_e.add_field(name='💸 Prize Pool:', value=f'> `${winnings:,}`')
+        lott_e.add_field(name='🎟️ Total Tickets Sold:', value=f'> `{total_tickets:,}`', inline=False)
+
+        item_data = [lott_data[1], lott_data[2], 6], [lott_data[3], lott_data[4], 16], [lott_data[5], lott_data[6], 40]
+        display = [slot_num_to_emote[3], slot_num_to_emote[5], slot_num_to_emote[6]]
+        for entry in item_data:
+            lott_e.add_field(
+                name=f'{display[item_data.index(entry)]} Bonus Item {item_data.index(entry) + 1}:',
+                value=f'> `{entry[1]}x {entry[0]}`' if winnings >= lott_data[0] * entry[2] else
+                f'> `[Locked]`')
+
+        lott_e.add_field(
+            name=f'{slot_num_to_emote[1]} Previous Winner:',
+            value=f'> `{prev_winner.name if prev_winner else "[Unknown User]"} (${lott_data[8]:,})`',
+            inline=False)
+
+        await interaction.response.send_message(embed=lott_e)
+
+    @app_commands.command(name='buytickets', description='Purchase lottery tickets for a chance to win!')
+    @app_commands.describe(amount='How many tickets would you like to get?')
+    async def buytickets(self, interaction: Interaction, amount: int = 1):
+        if await self.bot.is_blacklisted(interaction.user):
+            await self.bot.blacklisted_response(interaction)
+            return
+        elif not 1 <= amount <= 100:
+            await self.bot.bad_response(interaction, '❌ Please enter a number from `1` to `100`.')
+            return
+        elif await self.bot.money(interaction.user) < 5000 * amount:
+            await self.bot.bad_response(interaction, '❌ You can\'t afford that purchase.')
+            return
+        elif not await self.bot.lott_data():
+            await self.bot.bad_response(interaction, '❌ The lottery is temporarily unavailable, try again later.')
+            return
+
+        await self.bot.edit_balances(interaction, interaction.user, money_d=10000 * amount * -1)
+
+        for i in range(amount):
+            await self.bot.add_lott_ticket(interaction.user)
+        await self.bot.response(
+            interaction, f'**Purchased `{amount}` lottery tickets for `{amount * 5000:,}`! Good luck!**',
+            self.bot.colour(interaction.guild))
 
     @roulette.autocomplete('item')
     async def rou_autocomplete(self, interaction: Interaction, current: str) -> list[app_commands.Choice[str]]:
