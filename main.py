@@ -6,7 +6,7 @@ from pathlib import Path
 from math import floor, sqrt
 from time import strftime
 from random import sample, choice, randint
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from re import fullmatch
 
 from config import (
@@ -483,7 +483,8 @@ class GamBot(commands.Bot):
 
     async def cog_app_command_error(self, interaction: Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CommandOnCooldown):
-            await self.bad_response(interaction, f'❌ You\'re on cooldown. Try again in `{floor(error.retry_after)}s`.')
+            await self.bad_response(
+                interaction, f'❌ You\'re on cooldown. Try again in `{timedelta(seconds=floor(error.retry_after))}`.')
 
         elif isinstance(error, app_commands.BotMissingPermissions):
             await self.bad_response(
