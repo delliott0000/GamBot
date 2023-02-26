@@ -481,9 +481,6 @@ class GamBot(commands.Bot):
                     pass
                 break
 
-    async def on_guild_remove(self, guild: Guild):
-        logging.info(f'Left {guild.name} (now in {len(self.guilds):,} total guilds)')
-
     async def cog_app_command_error(self, interaction: Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CommandOnCooldown):
             await self.bad_response(interaction, f'❌ You\'re on cooldown. Try again in `{floor(error.retry_after)}s`.')
