@@ -391,7 +391,7 @@ class Games(commands.Cog):
             await self.bot.bad_response(interaction, '❌ The lottery is temporarily unavailable, try again later.')
             return
 
-        await self.bot.edit_balances(interaction, interaction.user, money_d=10000 * amount * -1)
+        await self.bot.edit_balances(interaction, interaction.user, money_d=5000 * amount * -1)
 
         for i in range(amount):
             await self.bot.add_lott_ticket(interaction.user)
