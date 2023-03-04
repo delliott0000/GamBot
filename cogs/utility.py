@@ -36,6 +36,14 @@ class Utility(commands.Cog):
                                 f'***Current uptime: `{timedelta(seconds=floor(time() - self.time))}`***\n\n'
                                 f'***Online since: <t:{floor(self.time)}:F>***', self.bot.colour(interaction.guild))
 
+    @app_commands.command(name='guildcount', description='View the number of guilds the bot is currently in.')
+    async def guildcount(self, interaction: Interaction):
+        if await self.bot.is_blacklisted(interaction.user):
+            await self.bot.blacklisted_response(interaction)
+            return
+        await self.bot.response(
+            interaction, f'***Currently in `{len(self.bot.guilds)}` guilds.***', self.bot.colour(interaction.guild))
+
     @app_commands.command(name='help', description='View information about the bot\'s commands and features.')
     async def help(self, interaction: Interaction, command: str = None):
         if await self.bot.is_blacklisted(interaction.user):
