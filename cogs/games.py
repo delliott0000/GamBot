@@ -396,7 +396,7 @@ class Games(commands.Cog):
         for i in range(amount):
             await self.bot.add_lott_ticket(interaction.user)
         await self.bot.response(
-            interaction, f'**Purchased `{amount}` lottery tickets for `{amount * 5000:,}`! Good luck!**',
+            interaction, f'**Purchased `{amount}` lottery tickets for `${amount * 5000:,}`! Good luck!**',
             self.bot.colour(interaction.guild))
 
     @roulette.autocomplete('item')
