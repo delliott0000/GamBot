@@ -180,7 +180,7 @@ class GamBot(commands.Bot):
         return (await self.user_data(user))[5]
 
     async def edit_pay_mult(self, user: User, pay_mult_d: float) -> None:
-        pay_mult = (await self.pay_mult(user)) + pay_mult_d
+        pay_mult = (await self.pay_mult(user)) - ((await self.rank(user)) - 1) / 50 + pay_mult_d
         await self.db.execute('UPDATE user_data SET pay_mult = ? WHERE id = ?', (pay_mult, user.id))
         await self.db.commit()
 
