@@ -30,9 +30,9 @@ class ScratchCard(ui.View, Embed):
             self.results[i] = randint(1, 9)
             self.results[i] += {'Common': -2, 'Uncommon': -1, 'Rare': 0, 'Epic': 1, 'Legendary': 2}[tier.name]
             if self.results[i] < 1:
-                self.results[i] = 1
+                self.results[i] = randint(1, 5)
             elif self.results[i] > 9:
-                self.results[i] = 9
+                self.results[i] = randint(5, 9)
             self.add_item(ScratchButton((i - 1) // 3, s_n_e[self.results[i]]))
 
     async def end_game(self):

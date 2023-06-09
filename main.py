@@ -65,8 +65,8 @@ class GamBot(commands.Bot):
 
         self.app_commands = []
 
-        self.next_daily_reset = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
-        self.next_weekly_reset = floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
+        self.next_daily_reset = self.next_weekly_reset = \
+            floor(datetime.combine(date.today(), datetime.min.time()).timestamp()) + 86400
 
         self.tree.on_error = self.cog_app_command_error
 
@@ -489,7 +489,7 @@ class GamBot(commands.Bot):
         elif isinstance(error, app_commands.BotMissingPermissions):
             await self.bad_response(
                 interaction,
-                f'❌ Bot missing required permissions: `{"".join(error.missing_permissions).replace("_", " ")}`.')
+                f'❌ Bot missing required permissions: `{", ".join(error.missing_permissions).replace("_", " ")}`.')
 
         else:
             await self.bad_response(interaction, f'An unexpected error occurred: {str(error)}')
@@ -513,7 +513,7 @@ class GamBot(commands.Bot):
 
         try:
             self.owner_ids = set(int(user_id) for user_id in OWNERS.split(','))
-            logging.info('Owner(s): ' + ''.join([(await self.fetch_user(user_id)).name for user_id in self.owner_ids]))
+            logging.info('Owner(s): ' + ', '.join([(await self.fetch_user(u_id)).name for u_id in self.owner_ids]))
         except (ValueError, NotFound):
             logging.fatal('Unknown/Invalid owner ID(s) passed.')
             exit(0)

@@ -105,8 +105,8 @@ class HigherOrLower(ui.View, Embed, Cards):
         await interaction.response.defer()
         self.stop()
 
-        payout = floor(self.bet * await self.bot.pay_mult(interaction.user) * (2 ** ((len(self.p1) // 5) - 1)))
-        xp_gain = floor((self.bet * await self.bot.xp_mult(interaction.user) * (2 ** ((len(self.p1) // 5) - 1))) / 100)
+        payout = floor(self.bet * await self.bot.pay_mult(interaction.user) * (4 ** ((len(self.p1) // 5) - 1)))
+        xp_gain = floor((self.bet * await self.bot.xp_mult(interaction.user) * (4 ** ((len(self.p1) // 5) - 1))) / 100)
         await self.bot.edit_balances(interaction, interaction.user, money_d=payout + self.bet, xp_d=xp_gain)
 
         self.add_field(name='Winner!', value=f'💎 You win `${payout:,}`!', inline=False)
