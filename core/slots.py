@@ -4,7 +4,8 @@ from discord import (
     Interaction,
     Button,
     ButtonStyle,
-    Embed
+    Embed,
+    HTTPException
 )
 from config import slot_num_to_emote as s_n_e
 
@@ -42,4 +43,7 @@ class SlotsView(ui.View):
 
     async def on_timeout(self):
         self.payouts.disabled = True
-        await self.interaction.edit_original_response(view=self)
+        try:
+            await self.interaction.edit_original_response(view=self)
+        except HTTPException:
+            pass

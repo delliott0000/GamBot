@@ -41,7 +41,8 @@ try:
         LoginFailure,
         NotFound,
         Forbidden,
-        HTTPException
+        HTTPException,
+        InteractionResponded
     )
     import aiosqlite
 except ModuleNotFoundError:
@@ -86,7 +87,12 @@ class GamBot(commands.Bot):
 
     @staticmethod
     async def response(interaction: Interaction, reply: str, colour: int, ephemeral: bool = False):
-        await interaction.response.send_message(embed=Embed(colour=colour, description=reply), ephemeral=ephemeral)
+        try:
+            await interaction.response.send_message(embed=Embed(colour=colour, description=reply), ephemeral=ephemeral)
+        except InteractionResponded:
+            await interaction.followup.send(embed=Embed(colour=colour, description=reply), ephemeral=ephemeral)
+        except HTTPException:
+            pass
 
     async def bad_response(self, interaction: Interaction, reply: str):
         await self.response(interaction, reply, Color.red(), True)
@@ -483,17 +489,16 @@ class GamBot(commands.Bot):
 
     async def cog_app_command_error(self, interaction: Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CommandOnCooldown):
-            await self.bad_response(
-                interaction, f'❌ You\'re on cooldown. Try again in `{timedelta(seconds=floor(error.retry_after))}`.')
+            msg = f'❌ You\'re on cooldown. Try again in `{timedelta(seconds=floor(error.retry_after))}`.'
 
         elif isinstance(error, app_commands.BotMissingPermissions):
-            await self.bad_response(
-                interaction,
-                f'❌ Bot missing required permissions: `{", ".join(error.missing_permissions).replace("_", " ")}`.')
+            msg = f'❌ Bot missing required permissions: `{", ".join(error.missing_permissions).replace("_", " ")}`.'
 
         else:
-            await self.bad_response(interaction, f'An unexpected error occurred: {str(error)}')
-            logging.error(f'An unexpected error occurred: {str(error)}')
+            msg = f'An unexpected command error occurred: {str(error)}'
+            logging.error(msg)
+
+        await self.bad_response(interaction, msg)
 
     async def setup_hook(self) -> None:
         logging.info('Setting up database...')
@@ -503,8 +508,10 @@ class GamBot(commands.Bot):
         await self.format_db()
 
         logging.info('Starting background tasks...')
-        self.update_data.start()
-        self.wait_for_rotation.start()
+
+        for loop in self.update_data, self.wait_for_rotation:
+            loop.add_exception_type(Exception)
+            loop.start()
 
         logging.info('Syncing commands...')
         self.app_commands = await self.tree.sync()
@@ -543,15 +550,14 @@ class GamBot(commands.Bot):
                                   'been explicitly enabled in the developer portal..')
 
         async def cancel_tasks():
+            for loop in self.update_data, self.wait_for_rotation, self.daily_reset, self.weekly_reset:
+                loop.stop()
+
             try:
                 await self.db.commit()
                 await self.db.close()
             except AttributeError:
                 pass
-            self.update_data.stop()
-            self.wait_for_rotation.stop()
-            self.daily_reset.stop()
-            self.weekly_reset.stop()
 
         try:
             asyncio.run(runner())

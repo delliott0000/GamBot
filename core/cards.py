@@ -6,7 +6,8 @@ from discord import (
     ButtonStyle,
     Embed,
     User,
-    Member
+    Member,
+    HTTPException
 )
 from config import (
     higher_lower_emotes as hl_emotes,
@@ -126,7 +127,10 @@ class HigherOrLower(ui.View, Embed, Cards):
         self.lower.disabled = True
         self.cash_out.disabled = True
         self.add_field(name='Timed Out!', value='🕐 You ran out of time to play!', inline=False)
-        await self.interaction.edit_original_response(embed=self, view=self)
+        try:
+            await self.interaction.edit_original_response(embed=self, view=self)
+        except HTTPException:
+            pass
 
 
 class Blackjack(ui.View, Embed, Cards):
@@ -267,7 +271,10 @@ class Blackjack(ui.View, Embed, Cards):
         self.stand.disabled = True
         self.double.disabled = True
         self.add_field(name='Timed Out!', value='🕐 You ran out of time to play!', inline=False)
-        await self.interaction.edit_original_response(embed=self, view=self)
+        try:
+            await self.interaction.edit_original_response(embed=self, view=self)
+        except HTTPException:
+            pass
 
 
 class PokerLobby(ui.View, Embed):
@@ -385,7 +392,10 @@ class PokerLobby(ui.View, Embed):
         return False
 
     async def on_timeout(self):
-        await self.cancel_game()
+        try:
+            await self.cancel_game()
+        except HTTPException:
+            pass
 
 
 class Poker(ui.View, Embed, Cards):
@@ -692,4 +702,7 @@ class Poker(ui.View, Embed, Cards):
             value=f'Refunding the following player(s): '
                   f'`{", ".join([player.name for player in refunded_players]) if refunded_players else "None"}`',
             inline=False)
-        await self.interaction.edit_original_response(embed=self, view=self)
+        try:
+            await self.interaction.edit_original_response(embed=self, view=self)
+        except HTTPException:
+            pass

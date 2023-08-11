@@ -125,7 +125,7 @@ class Profile(commands.Cog):
 
             user_rank = floor(sqrt(item[1] / 8561) + 1)
             leaderboard_embed.add_field(
-                name=f'#{data.index(item) + 1}: {user} {medals_mapping[data.index(item)]}',
+                name=f'#{data.index(item) + 1}: {user.name} {medals_mapping[data.index(item)]}',
                 value=f'`{format_mapping[view.value][0]}{item[1]:,}'
                       f'{format_mapping[view.value][1]}`'.replace('<rank>', str(user_rank)),
                 inline=False)
