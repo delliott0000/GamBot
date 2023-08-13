@@ -487,6 +487,13 @@ class GamBot(commands.Bot):
                     pass
                 break
 
+    @staticmethod
+    async def on_interaction(interaction: Interaction) -> None:
+        command = interaction.command
+        if command:
+            user = interaction.user
+            logging.info(f'{user} (ID: {user.id}) used command: {command.name}')
+
     async def cog_app_command_error(self, interaction: Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CommandOnCooldown):
             msg = f'❌ You\'re on cooldown. Try again in `{timedelta(seconds=floor(error.retry_after))}`.'
