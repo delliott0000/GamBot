@@ -17,7 +17,7 @@ class SlotsView(ui.View):
         self.interaction = interaction
 
     @ui.button(label='View Payouts', emoji=s_n_e[0], style=ButtonStyle.grey)
-    async def payouts(self, interaction: Interaction, button: Button):
+    async def payouts(self, interaction: Interaction, _: Button):
         payouts_embed = Embed(
             colour=self.bot.colour(interaction.guild),
             title='Slots and Payouts',

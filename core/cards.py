@@ -70,7 +70,7 @@ class HigherOrLower(ui.View, Embed, Cards):
         await self.interaction.edit_original_response(embed=self, view=None)
 
     @ui.button(label='Higher!', emoji=hl_emotes['higher'], style=ButtonStyle.blurple)
-    async def higher(self, interaction: Interaction, button: Button):
+    async def higher(self, interaction: Interaction, _: Button):
         await interaction.response.defer()
 
         if self.p1[-1] < self.p1[-2]:
@@ -86,7 +86,7 @@ class HigherOrLower(ui.View, Embed, Cards):
             await self.bot.add_achievement(interaction, interaction.user, 'hl_str')
 
     @ui.button(label='Lower!', emoji=hl_emotes['lower'], style=ButtonStyle.blurple)
-    async def lower(self, interaction: Interaction, button: Button):
+    async def lower(self, interaction: Interaction, _: Button):
         await interaction.response.defer()
 
         if self.p1[-1] > self.p1[-2]:
@@ -102,7 +102,7 @@ class HigherOrLower(ui.View, Embed, Cards):
             await self.bot.add_achievement(interaction, interaction.user, 'hl_str')
 
     @ui.button(label='Cash Out', emoji=hl_emotes['walk'], style=ButtonStyle.green)
-    async def cash_out(self, interaction: Interaction, button: Button):
+    async def cash_out(self, interaction: Interaction, _: Button):
         await interaction.response.defer()
         self.stop()
 
@@ -232,7 +232,7 @@ class Blackjack(ui.View, Embed, Cards):
             await self.bot.add_achievement(self.interaction, self.interaction.user, 'bj_max')
 
     @ui.button(label='Draw', emoji=bj_emotes['draw'], style=ButtonStyle.green)
-    async def draw(self, interaction: Interaction, button: Button):
+    async def draw(self, interaction: Interaction, _: Button):
         await interaction.response.defer()
         self.deal_card(self.p1)
 
@@ -245,13 +245,13 @@ class Blackjack(ui.View, Embed, Cards):
             await self.interaction.edit_original_response(embed=self, view=self)
 
     @ui.button(label='Stand', emoji=bj_emotes['stand'], style=ButtonStyle.red)
-    async def stand(self, interaction: Interaction, button: Button):
+    async def stand(self, interaction: Interaction, _: Button):
         await interaction.response.defer()
 
         await self.end_game()
 
     @ui.button(label='Double Down', emoji=bj_emotes['dd'], style=ButtonStyle.blurple)
-    async def double(self, interaction: Interaction, button: Button):
+    async def double(self, interaction: Interaction, _: Button):
         await interaction.response.defer()
 
         await self.bot.edit_balances(interaction, interaction.user, money_d=self.bet * -1)
@@ -319,7 +319,7 @@ class PokerLobby(ui.View, Embed):
         await self.interaction.edit_original_response(embed=self, view=None)
 
     @ui.button(label='Start Game', emoji=poker_emotes['start'], style=ButtonStyle.green, disabled=True)
-    async def start(self, interaction: Interaction, button: Button):
+    async def start(self, interaction: Interaction, _: Button):
         if interaction.user != self.interaction.user:
             await self.bot.bad_response(interaction, '❌ You\'re not the host of this game.')
             return
@@ -334,7 +334,7 @@ class PokerLobby(ui.View, Embed):
         self.stop()
 
     @ui.button(label='Seat 2', emoji=poker_emotes['seat'], style=ButtonStyle.blurple)
-    async def seat_2(self, interaction: Interaction, button: Button):
+    async def seat_2(self, interaction: Interaction, _: Button):
         if interaction.user in [self.u1, self.u2, self.u3, self.u4]:
             await self.bot.bad_response(interaction, '❌ You\'re already in this game.')
             return
@@ -349,7 +349,7 @@ class PokerLobby(ui.View, Embed):
         await self.interaction.edit_original_response(embed=self, view=self)
 
     @ui.button(label='Seat 3', emoji=poker_emotes['seat'], style=ButtonStyle.blurple)
-    async def seat_3(self, interaction: Interaction, button: Button):
+    async def seat_3(self, interaction: Interaction, _: Button):
         if interaction.user in [self.u1, self.u2, self.u3, self.u4]:
             await self.bot.bad_response(interaction, '❌ You\'re already in this game.')
             return
@@ -364,7 +364,7 @@ class PokerLobby(ui.View, Embed):
         await self.interaction.edit_original_response(embed=self, view=self)
 
     @ui.button(label='Seat 4', emoji=poker_emotes['seat'], style=ButtonStyle.blurple)
-    async def seat_4(self, interaction: Interaction, button: Button):
+    async def seat_4(self, interaction: Interaction, _: Button):
         if interaction.user in [self.u1, self.u2, self.u3, self.u4]:
             await self.bot.bad_response(interaction, '❌ You\'re already in this game.')
             return
@@ -379,7 +379,7 @@ class PokerLobby(ui.View, Embed):
         await self.interaction.edit_original_response(embed=self, view=self)
 
     @ui.button(label='Cancel Game', emoji=poker_emotes['cancel'], style=ButtonStyle.red)
-    async def cancel(self, interaction: Interaction, button: Button):
+    async def cancel(self, interaction: Interaction, _: Button):
         if interaction.user != self.interaction.user:
             await self.bot.bad_response(interaction, '❌ You\'re not the host of this game.')
             return
@@ -621,12 +621,12 @@ class Poker(ui.View, Embed, Cards):
             await self.bot.add_achievement(self.interaction, winner, 'poker_sf')
 
     @ui.button(label='View Your Cards', emoji=c_emotes[0], style=ButtonStyle.grey)
-    async def view_cards(self, interaction: Interaction, button: Button):
+    async def view_cards(self, interaction: Interaction, _: Button):
         await interaction.response.send_message(
             ''.join([c_emotes[card] for card in self.player_mapping[interaction.user]['cards']]), ephemeral=True)
 
     @ui.button(label='Play On', emoji=poker_emotes['start'], style=ButtonStyle.green)
-    async def progress(self, interaction: Interaction, button: Button):
+    async def progress(self, interaction: Interaction, _: Button):
         if self.player_mapping[interaction.user]['vote']:
             await self.bot.bad_response(interaction, '❌ You\'ve already voted to play on.')
             return
@@ -652,15 +652,15 @@ class Poker(ui.View, Embed, Cards):
         await self.interaction.edit_original_response(embed=self)
 
     @ui.button(label='Place Small Bet', emoji=poker_emotes['small_bet'], style=ButtonStyle.blurple)
-    async def small_bet(self, interaction: Interaction, button: Button):
+    async def small_bet(self, interaction: Interaction, _: Button):
         await self.update_bet(interaction, self.start_bet // 5)
 
     @ui.button(label='Place Large Bet', emoji=poker_emotes['big_bet'], style=ButtonStyle.blurple)
-    async def big_bet(self, interaction: Interaction, button: Button):
+    async def big_bet(self, interaction: Interaction, _: Button):
         await self.update_bet(interaction, self.start_bet)
 
     @ui.button(label='Fold', emoji=poker_emotes['cancel'], style=ButtonStyle.red)
-    async def fold(self, interaction: Interaction, button: Button):
+    async def fold(self, interaction: Interaction, _: Button):
         self.player_mapping[interaction.user]['folded'] = True
 
         if len([p for p in self.player_mapping if not self.player_mapping[p]['folded']]) == 1:
