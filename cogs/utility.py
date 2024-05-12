@@ -18,6 +18,7 @@ class Utility(commands.Cog):
     def __init__(self, bot: GamBot):
         self.bot = bot
         self.time = time()
+        self.owner_only = '❌ Only {} owners can use this command.'
 
     @app_commands.command(name='ping', description='Check the bot\'s current latency.')
     async def ping(self, interaction: Interaction):
@@ -102,7 +103,7 @@ class Utility(commands.Cog):
                                     app_commands.Choice(name='XP', value='XP')])
     async def editbal(self, interaction: Interaction, user: User, bal_type: app_commands.Choice[str], amount: int):
         if interaction.user.id not in self.bot.owner_ids:
-            await self.bot.bad_response(interaction, '❌ This command is owner-only.')
+            await self.bot.bad_response(interaction, self.owner_only.format(interaction.guild.me.name))
             return
         elif user.bot:
             await self.bot.bad_response(interaction, '❌ This user is a bot.')
@@ -138,7 +139,7 @@ class Utility(commands.Cog):
                                      ])
     async def editinv(self, interaction: Interaction, user: User, item_type: app_commands.Choice[str], amount: int):
         if interaction.user.id not in self.bot.owner_ids:
-            await self.bot.bad_response(interaction, '❌ This command is owner-only.')
+            await self.bot.bad_response(interaction, self.owner_only.format(interaction.guild.me.name))
             return
         elif user.bot:
             await self.bot.bad_response(interaction, '❌ This user is a bot.')
@@ -154,7 +155,7 @@ class Utility(commands.Cog):
     @app_commands.describe(duration='How long would you like them to have premium for?')
     async def addpremium(self, interaction: Interaction, user: User, duration: str):
         if interaction.user.id not in self.bot.owner_ids:
-            await self.bot.bad_response(interaction, '❌ This command is owner-only.')
+            await self.bot.bad_response(interaction, self.owner_only.format(interaction.guild.me.name))
             return
         elif user.bot:
             await self.bot.bad_response(interaction, '❌ This user is a bot.')
@@ -178,7 +179,7 @@ class Utility(commands.Cog):
     @app_commands.describe(user='Who would you like to blacklist?')
     async def blacklist(self, interaction: Interaction, user: User):
         if interaction.user.id not in self.bot.owner_ids:
-            await self.bot.bad_response(interaction, '❌ This command is owner-only.')
+            await self.bot.bad_response(interaction, self.owner_only.format(interaction.guild.me.name))
             return
         elif user.bot:
             await self.bot.bad_response(interaction, '❌ This user is a bot.')
@@ -193,7 +194,7 @@ class Utility(commands.Cog):
     @app_commands.describe(user='Whose data do you want to wipe?')
     async def wipedata(self, interaction: Interaction, user: User):
         if interaction.user.id not in self.bot.owner_ids:
-            await self.bot.bad_response(interaction, '❌ This command is owner-only.')
+            await self.bot.bad_response(interaction, self.owner_only.format(interaction.guild.me.name))
             return
         elif user.bot:
             await self.bot.bad_response(interaction, '❌ This user is a bot.')
@@ -206,7 +207,7 @@ class Utility(commands.Cog):
     @app_commands.command(name='terminate', description='Terminates the bot process.')
     async def terminate(self, interaction: Interaction):
         if interaction.user.id not in self.bot.owner_ids:
-            await self.bot.bad_response(interaction, '❌ This command is owner-only.')
+            await self.bot.bad_response(interaction, self.owner_only.format(interaction.guild.me.name))
             return
         logging.info('Received signal to terminate bot and event loop.')
         await self.bot.response(interaction, 'Bot process terminated.', self.bot.colour(interaction.guild))
