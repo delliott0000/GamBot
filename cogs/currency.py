@@ -94,8 +94,8 @@ class Currency(commands.Cog):
             return
 
         cons_dailies = await self.bot.cons_dailies(interaction.user)
-        money = floor(randint(25000, 30000) * await self.bot.pay_mult(interaction.user) * (1.05 ** cons_dailies))
-        xp = floor(randint(500, 750) * await self.bot.xp_mult(interaction.user) * (1.05 ** cons_dailies))
+        money = floor(randint(25000, 30000) * await self.bot.pay_mult(interaction.user) * (1.01 ** cons_dailies))
+        xp = floor(randint(500, 750) * await self.bot.xp_mult(interaction.user) * (1.01 ** cons_dailies))
         await self.bot.edit_balances(interaction, interaction.user, money_d=money, xp_d=xp)
         await self.bot.add_daily(interaction.user)
 
